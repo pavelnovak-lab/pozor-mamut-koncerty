@@ -1,0 +1,327 @@
+<title>Mamut naživo</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@400;500&family=Work+Sans:wght@400;500;600&display=swap">
+<style>
+/* Plakátový pás nahoře (bordó jako kapelní triko), pod ním čistá plocha s grafy po sekcích; mapa a žebříčky vedle sebe na šířku, pod sebou na telefonu */
+:root{
+  --bg:#FBF9F7; --panel:#F3EEEA; --fg:#231719; --muted:#6E5F60; --line:#E2D8D3;
+  --accent:#96222B; --accent-soft:#E9C9CB; --sand:#C79250; --band:#96222B; --band-fg:#F2D096;
+  --map:#EAE2DC; --map-line:#CDBFB8;
+  --f-display:"Anton","Impact","Arial Narrow Bold",sans-serif;
+  --f-body:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#171113; --panel:#221A1C; --fg:#F1E6DF; --muted:#B3A29F; --line:#3A2E30;
+  --accent:#E26872; --accent-soft:#4A2529; --sand:#E0B172; --band:#6E1820; --band-fg:#F2D096;
+  --map:#2A2023; --map-line:#4A3B3E; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#171113; --panel:#221A1C; --fg:#F1E6DF; --muted:#B3A29F; --line:#3A2E30;
+  --accent:#E26872; --accent-soft:#4A2529; --sand:#E0B172; --band:#6E1820; --band-fg:#F2D096;
+  --map:#2A2023; --map-line:#4A3B3E; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:16px/1.55 var(--f-body);margin:0}
+.wrap{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.band{background:var(--band);color:var(--band-fg)}
+header.band .wrap{display:flex;gap:28px;align-items:center;padding-block:28px 32px;flex-wrap:wrap}
+header.band img{width:132px;height:132px;flex:none}
+.hero{flex:1;min-width:0}
+.eyebrow{font:500 12px/1.2 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;opacity:.85;margin:0 0 6px}
+h1{font:400 clamp(44px,8vw,84px)/1.12 var(--f-display);margin:0;padding-top:.08em;letter-spacing:.01em;text-transform:uppercase;text-wrap:balance}
+.lede{margin:12px 0 0;max-width:60ch;color:var(--band-fg);opacity:.92}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line)}
+.stat{background:var(--bg);padding:20px 16px 18px}
+.stat b{display:block;font:400 clamp(34px,5vw,52px)/1 var(--f-display);color:var(--accent);font-variant-numeric:tabular-nums}
+.stat span{display:block;margin-top:6px;font-size:13px;color:var(--muted)}
+.stats-wrap{background:var(--bg);border-bottom:1px solid var(--line)}
+main{padding-block:12px 48px}
+section{padding-block:36px 8px;border-bottom:1px solid var(--line)}
+section:last-of-type{border-bottom:0}
+h2{font:400 30px/1.2 var(--f-display);text-transform:uppercase;letter-spacing:.02em;margin:0 0 4px;text-wrap:balance}
+.sub{color:var(--muted);margin:0 0 18px;max-width:65ch;font-size:15px}
+.grid2{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:32px;align-items:start}
+.grid2>*{min-width:0}
+svg text{fill:var(--muted);font:12px var(--f-mono)}
+svg .lbl{fill:var(--fg);font:500 12px var(--f-mono)}
+svg .halo{paint-order:stroke;stroke:var(--bg);stroke-width:3.5px;stroke-linejoin:round;font-size:13px}
+.bar{fill:var(--accent)}
+.bar:hover,.bar.on{fill:var(--sand)}
+.grid{stroke:var(--line);stroke-width:1}
+.axis{stroke:var(--map-line);stroke-width:1}
+.note{fill:var(--muted);font:italic 12px var(--f-body)}
+.cz{fill:var(--map);stroke:var(--map-line);stroke-width:1.2}
+.dot{fill:var(--accent);fill-opacity:.82;stroke:var(--bg);stroke-width:2}
+.dot:hover,.dot.on{fill:var(--sand);fill-opacity:1}
+.hbars{display:grid;gap:6px}
+.hb{display:grid;grid-template-columns:minmax(0,11em) minmax(0,1fr) 2.2em;gap:10px;align-items:center;font-size:14px}
+.hb .n{font:500 13px var(--f-mono);text-align:right;font-variant-numeric:tabular-nums}
+.hb .t{height:14px;background:var(--panel);border-radius:0 4px 4px 0;overflow:hidden}
+.hb .t i{display:block;height:100%;background:var(--accent);border-radius:0 4px 4px 0}
+.hb .k{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.records{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.rec{background:var(--panel);padding:16px;border-radius:6px}
+.rec b{display:block;font:400 30px/1.05 var(--f-display);color:var(--accent);font-variant-numeric:tabular-nums}
+.rec span{display:block;font-size:13px;color:var(--muted);margin-top:6px}
+.rec em{font-style:normal;color:var(--fg)}
+.chart-box{position:relative;overflow-x:auto}
+.tip{position:absolute;pointer-events:none;background:var(--fg);color:var(--bg);font:13px/1.35 var(--f-body);padding:6px 9px;border-radius:4px;white-space:nowrap;transform:translate(-50%,-110%);z-index:2}
+.tip b{font-family:var(--f-mono)}
+.filters{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}
+.filters button{font:500 13px var(--f-mono);background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:999px;padding:4px 12px;cursor:pointer}
+.filters button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.filters button:focus-visible,a:focus-visible{outline:2px solid var(--sand);outline-offset:2px}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{font:500 11px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+td.d{font:13px var(--f-mono);white-space:nowrap;font-variant-numeric:tabular-nums}
+td.k{color:var(--muted);font-size:13px}
+.upcoming{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+.chip{border:1px solid var(--accent);color:var(--fg);border-radius:4px;padding:6px 10px;font-size:14px}
+.chip b{font-family:var(--f-mono);color:var(--accent);margin-right:6px}
+footer{border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+footer .wrap{padding-block:20px 28px}
+a{color:var(--accent)}
+@media (max-width:760px){
+  .stats,.records{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid2{grid-template-columns:minmax(0,1fr)}
+  header.band img{width:88px;height:88px}
+  .hb{grid-template-columns:minmax(0,8.5em) minmax(0,1fr) 2em}
+}
+@media (prefers-reduced-motion:no-preference){.bar,.dot{transition:fill .15s}}
+</style>
+
+<header class="band">
+  <div class="wrap">
+    <img src="__LOGO__" alt="Logo Pozor Mamut">
+    <div class="hero">
+      <p class="eyebrow">Pozor Mamut · punk Jihlava · koncerty od roku <span id="od"></span></p>
+      <h1>Mamut naživo</h1>
+      <p class="lede" id="lede"></p>
+    </div>
+  </div>
+</header>
+<div class="stats-wrap"><div class="wrap" style="padding-left:0;padding-right:0"><div class="stats" id="stats"></div></div></div>
+
+<main class="wrap">
+  <section id="roky">
+    <h2>Koncerty po letech</h2>
+    <p class="sub" id="roky-sub"></p>
+    <div class="chart-box" id="roky-box"></div>
+  </section>
+
+  <section id="kde">
+    <div class="grid2">
+      <div>
+        <h2>Kde jsme hráli</h2>
+        <p class="sub">Velikost kolečka je počet koncertů v daném městě.</p>
+        <div class="chart-box" id="mapa-box"></div>
+      </div>
+      <div>
+        <h2>Nejčastější města</h2>
+        <p class="sub">Domovská Vysočina vede.</p>
+        <div class="hbars" id="mesta"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="s-kym">
+    <div class="grid2">
+      <div>
+        <h2>S kým jsme hráli</h2>
+        <p class="sub">Kapely, se kterými jsme stáli na jednom plakátu aspoň dvakrát.</p>
+        <div class="hbars" id="kapely"></div>
+      </div>
+      <div>
+        <h2>Kdy hrajeme</h2>
+        <p class="sub">Den v týdnu. Mamut je sobotní zvíře.</p>
+        <div class="chart-box" id="dny-box"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="cesty" hidden>
+    <h2>Na cestách</h2>
+    <p class="sub" id="cesty-sub"></p>
+    <div class="records" id="records"></div>
+  </section>
+
+  <section id="pisne" hidden>
+    <h2>Co hrajeme</h2>
+    <p class="sub" id="pisne-sub"></p>
+    <div class="hbars" id="pisne-list"></div>
+  </section>
+
+  <section id="seznam">
+    <h2>Všechny koncerty</h2>
+    <div id="budouci-box" hidden><p class="sub" style="margin-bottom:8px">Chystáme:</p><div class="upcoming" id="budouci"></div><p></p></div>
+    <div class="filters" id="filtry" role="group" aria-label="Rok"></div>
+    <div class="tbl"><table><thead><tr><th>Datum</th><th>Město</th><th>Klub / akce</th><th>Hráli s námi</th></tr></thead><tbody id="tb"></tbody></table></div>
+  </section>
+</main>
+<footer><div class="wrap">
+  Sestaveno z kapelního kalendáře, plakátů, videí a záznamů z cest. Aktualizováno <span id="akt"></span>.
+  Chybí koncert nebo nesedí datum? Napište na <span style="user-select:all">koncerty@pozormamut.cz</span>.
+  Web kapely: <a href="https://pozormamut.cz/" target="_blank" rel="noopener">pozormamut.cz</a>.
+</div></footer>
+
+<script>
+const D = __DATA__;
+const OBRYS = __OBRYS__;
+const $ = s => document.querySelector(s);
+const NS = 'http://www.w3.org/2000/svg';
+const el = (t, a = {}, p) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; };
+const plural = (n, a, b, c) => n === 1 ? a : (n >= 2 && n <= 4 ? b : c);
+const vyctem = a => a.length < 2 ? String(a[0]) : a.slice(0, -1).join(', ') + ' a ' + a[a.length - 1];
+const nejRoky = () => (D.nejvic.r.length > 1 ? 'v letech ' : 'v roce ') + vyctem(D.nejvic.r);
+const cz = n => n.toLocaleString('cs-CZ');
+
+$('#od').textContent = D.od;
+$('#akt').textContent = D.aktualizace;
+$('#lede').textContent = `Od prvního koncertu v jihlavském Bezvědomí v roce ${D.od} jsme odehráli ${D.n} ${plural(D.n,'koncert','koncerty','koncertů')} v ${D.mest} ${plural(D.mest,'městě','městech','městech')}. Nejvíc ${nejRoky()}: ${D.nejvic.n}.`;
+
+const stats = [[D.n, 'odehraných koncertů'], [D.mest, 'měst a vesnic'], [D.kapel, 'kapel na společných plakátech']];
+if (D.cesty && D.cesty.km) stats.push([cz(D.cesty.km), 'kilometrů na cestách (přibližně)']);
+else stats.push([D.roky.length, 'let na pódiích']);
+$('#stats').innerHTML = stats.map(([b, s]) => `<div class="stat"><b>${b}</b><span>${s}</span></div>`).join('');
+
+// tooltip
+function tipFor(box) {
+  const t = document.createElement('div'); t.className = 'tip'; t.hidden = true; box.appendChild(t);
+  return {
+    show(html, x, y) { t.innerHTML = html; t.style.left = x + 'px'; t.style.top = y + 'px'; t.hidden = false; },
+    hide() { t.hidden = true; }
+  };
+}
+
+// --- koncerty po letech ---
+(function () {
+  const box = $('#roky-box'), R = D.roky, W = 1000, H = 300, m = { l: 34, r: 8, t: 30, b: 28 };
+  const max = Math.max(...R.map(r => r.n)), top = Math.ceil(max / 5) * 5;
+  const s = el('svg', { viewBox: `0 0 ${W} ${H}`, width: '100%', role: 'img', 'aria-label': 'Počet koncertů po letech' }, box);
+  s.style.minWidth = '560px';
+  requestAnimationFrame(() => { box.scrollLeft = box.scrollWidth; });
+  const iw = W - m.l - m.r, ih = H - m.t - m.b, bw = iw / R.length, y = v => m.t + ih - v / top * ih;
+  for (let v = 0; v <= top; v += 5) {
+    el('line', { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: v ? 'grid' : 'axis' }, s);
+    el('text', { x: m.l - 8, y: y(v) + 4, 'text-anchor': 'end' }, s).textContent = v;
+  }
+  const tip = tipFor(box);
+  R.forEach((r, i) => {
+    const x = m.l + i * bw + bw * 0.18, w = bw * 0.64, h = ih * r.n / top;
+    if (r.n) {
+      const p = el('path', { class: 'bar', d: `M${x},${m.t + ih} V${m.t + ih - h + 4} q0,-4 4,-4 h${w - 8} q4,0 4,4 V${m.t + ih} Z` }, s);
+      el('text', { x: x + w / 2, y: m.t + ih - h - 7, 'text-anchor': 'middle', class: 'lbl' }, s).textContent = r.n;
+      const hit = el('rect', { x: m.l + i * bw, y: m.t, width: bw, height: ih, fill: 'transparent' }, s);
+      hit.addEventListener('mouseenter', () => { p.classList.add('on'); const bb = box.getBoundingClientRect(), hb = p.getBoundingClientRect(); tip.show(`<b>${r.r}</b> · ${r.n} ${plural(r.n,'koncert','koncerty','koncertů')}`, hb.left - bb.left + hb.width / 2 + box.scrollLeft, hb.top - bb.top); });
+      hit.addEventListener('mouseleave', () => { p.classList.remove('on'); tip.hide(); });
+    }
+    el('text', { x: m.l + i * bw + bw / 2, y: H - 8, 'text-anchor': 'middle' }, s).textContent = "'" + String(r.r).slice(2);
+  });
+  const ci = R.findIndex(r => r.r === 2020);
+  if (ci >= 0) {
+    const x = m.l + (ci + 1) * bw;
+    el('text', { x, y: y(Math.max(R[ci].n, (R[ci + 1] || {}).n || 0)) - 24, 'text-anchor': 'middle', class: 'note' }, s).textContent = 'covid';
+  }
+  const best = D.nejvic;
+  $('#roky-sub').textContent = `Nejvíc koncertů (${best.n}) jsme odehráli ${nejRoky()}. Propad v letech 2020 a 2021 způsobil covid.`;
+})();
+
+// --- mapa ---
+(function () {
+  const box = $('#mapa-box'), W = 640, H = 380, pad = 18;
+  const pts = OBRYS.flat();
+  const lo0 = Math.min(...pts.map(p => p[0])), lo1 = Math.max(...pts.map(p => p[0]));
+  const la0 = Math.min(...pts.map(p => p[1])), la1 = Math.max(...pts.map(p => p[1]));
+  const k = Math.cos((la0 + la1) / 2 * Math.PI / 180);
+  const sc = Math.min((W - 2 * pad) / ((lo1 - lo0) * k), (H - 2 * pad) / (la1 - la0));
+  const X = lo => pad + (lo - lo0) * k * sc, Y = la => pad + (la1 - la) * sc;
+  const s = el('svg', { viewBox: `0 0 ${W} ${H}`, width: '100%', role: 'img', 'aria-label': 'Mapa míst koncertů' }, box);
+  OBRYS.forEach(r => el('path', { class: 'cz', d: 'M' + r.map(p => X(p[0]).toFixed(1) + ',' + Y(p[1]).toFixed(1)).join('L') + 'Z' }, s));
+  const tip = tipFor(box);
+  const M = [...D.mapa].sort((a, b) => b.n - a.n);
+  const rad = n => 4 + Math.sqrt(n) * 4.2;
+  [...M].reverse().forEach(m => {
+    const c = el('circle', { class: 'dot', cx: X(m.lo), cy: Y(m.la), r: rad(m.n) }, s);
+    c.addEventListener('mouseenter', () => { c.classList.add('on'); const bb = box.getBoundingClientRect(), cb = c.getBoundingClientRect(); tip.show(`${m.m} · <b>${m.n}</b>×`, cb.left - bb.left + cb.width / 2, cb.top - bb.top); });
+    c.addEventListener('mouseleave', () => { c.classList.remove('on'); tip.hide(); });
+  });
+  const boxes = M.map(m => ({ x0: X(m.lo) - rad(m.n), x1: X(m.lo) + rad(m.n), y0: Y(m.la) - rad(m.n), y1: Y(m.la) + rad(m.n) }));
+  const hit = (b, list) => list.some(o => b.x0 < o.x1 && b.x1 > o.x0 && b.y0 < o.y1 && b.y1 > o.y0);
+  const labels = [];
+  M.slice(0, 12).forEach((m, i) => {
+    const w = m.m.length * 7.4 + 4, r = rad(m.n), cx = X(m.lo), cy = Y(m.la);
+    for (const [dx, anchor] of [[r + 4, 'start'], [-r - 4, 'end']]) {
+      const x0 = anchor === 'start' ? cx + dx : cx + dx - w;
+      const b = { x0, x1: x0 + w, y0: cy - 8, y1: cy + 6 };
+      if (b.x0 < 0 || b.x1 > W) continue;
+      if (hit(b, labels) || (i > 0 && hit(b, boxes.filter((_, j) => j !== i)))) continue;
+      labels.push(b);
+      el('text', { x: cx + dx, y: cy + 4, 'text-anchor': anchor, class: 'lbl halo' }, s).textContent = m.m;
+      break;
+    }
+  });
+  const top = M.slice(0, 10), mx = top[0].n;
+  $('#mesta').innerHTML = top.map(m => `<div class="hb"><span class="k">${m.m}</span><span class="t"><i style="width:${m.n / mx * 100}%"></i></span><span class="n">${m.n}</span></div>`).join('');
+})();
+
+// --- kapely ---
+(function () {
+  const K = D.kapely, mx = K.length ? K[0].n : 1;
+  $('#kapely').innerHTML = K.map(k => `<div class="hb"><span class="k" title="${k.k}">${k.k}</span><span class="t"><i style="width:${k.n / mx * 100}%"></i></span><span class="n">${k.n}</span></div>`).join('');
+})();
+
+// --- dny ---
+(function () {
+  const box = $('#dny-box'), R = D.dny, W = 420, H = 220, m = { l: 8, r: 8, t: 24, b: 26 };
+  const max = Math.max(...R.map(r => r.n));
+  const s = el('svg', { viewBox: `0 0 ${W} ${H}`, width: '100%', role: 'img', 'aria-label': 'Koncerty podle dne v týdnu' }, box);
+  const iw = W - m.l - m.r, ih = H - m.t - m.b, bw = iw / 7;
+  el('line', { x1: m.l, x2: W - m.r, y1: m.t + ih, y2: m.t + ih, class: 'axis' }, s);
+  R.forEach((r, i) => {
+    const x = m.l + i * bw + bw * .2, w = bw * .6, h = Math.max(r.n ? 2 : 0, ih * r.n / max);
+    if (r.n) el('path', { class: 'bar', d: `M${x},${m.t + ih} V${m.t + ih - h + Math.min(4, h)} q0,-${Math.min(4, h)} 4,-${Math.min(4, h)} h${w - 8} q4,0 4,${Math.min(4, h)} V${m.t + ih} Z` }, s);
+    el('text', { x: x + w / 2, y: m.t + ih - h - 6, 'text-anchor': 'middle', class: 'lbl' }, s).textContent = r.n;
+    el('text', { x: x + w / 2, y: H - 8, 'text-anchor': 'middle' }, s).textContent = r.d;
+  });
+})();
+
+// --- cesty ---
+(function () {
+  const C = D.cesty; if (!C || !C.km) return;
+  $('#cesty').hidden = false;
+  $('#cesty-sub').textContent = `Spočítáno z ${C.n} cest, u kterých se zachovala trasa. Kilometry jsou tam i zpátky.`;
+  const R = [
+    [cz(C.km) + ' km', 'najeto na koncerty'],
+    [cz(C.nej_km) + ' km', `nejdelší cesta: <em>${C.nej}</em>`],
+    [C.pozde, `nejpozdější odjezd z koncertu: <em>${C.pozde_kde}</em>`],
+  ];
+  if (C.benz) R.push([C.benz_n + '×', `zastávka na benzínce, nejčastěji <em>${C.benz}</em>`]);
+  $('#records').innerHTML = R.map(([b, s]) => `<div class="rec"><b>${b}</b><span>${s}</span></div>`).join('');
+})();
+
+// --- písničky ---
+(function () {
+  const P = D.pisne; if (!P.length) return;
+  $('#pisne').hidden = false;
+  $('#pisne-sub').textContent = `Z ${D.playlistu} ${plural(D.playlistu,'dochovaného playlistu','dochovaných playlistů','dochovaných playlistů')}. Každý další dochovaný papír s playlistem pomůže.`;
+  const mx = P[0].n;
+  $('#pisne-list').innerHTML = P.slice(0, 16).map(p => `<div class="hb"><span class="k">${p.p}</span><span class="t"><i style="width:${p.n / mx * 100}%"></i></span><span class="n">${p.n}</span></div>`).join('');
+})();
+
+// --- seznam ---
+(function () {
+  const B = D.budouci;
+  if (B.length) { $('#budouci-box').hidden = false; $('#budouci').innerHTML = B.map(b => `<span class="chip"><b>${b.d}</b>${[b.mesto, b.akce].filter(Boolean).join(' · ')}</span>`).join(''); }
+  const roky = [...new Set(D.seznam.map(s => s.r))];
+  let sel = 'vše';
+  const draw = () => {
+    $('#filtry').innerHTML = ['vše', ...roky].map(r => `<button type="button" aria-pressed="${String(r) === String(sel)}" data-r="${r}">${r}</button>`).join('');
+    const rows = D.seznam.filter(s => sel === 'vše' || String(s.r) === String(sel));
+    $('#tb').innerHTML = rows.map(s => `<tr><td class="d">${s.d}</td><td>${s.mesto || ''}</td><td>${s.akce || ''}</td><td class="k">${s.kapely || ''}</td></tr>`).join('');
+  };
+  $('#filtry').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; sel = b.dataset.r; draw(); });
+  draw();
+})();
+</script>
