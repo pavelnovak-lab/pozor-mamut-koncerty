@@ -8,7 +8,7 @@ Zdroje:
   - GeoNames CZ.txt (souřadnice obcí), data/cz_obrys.json (obrys ČR, Natural Earth).
 Použití:  python3 make.py [--xlsx soubor.xlsx] [--geonames CZ.txt]
 """
-import argparse, base64, collections, csv, datetime as dt, io, json, math, os, re, subprocess, sys
+import argparse, base64, collections, csv, datetime as dt, hashlib, io, json, math, os, re, subprocess, sys
 import openpyxl
 
 TU = os.path.dirname(os.path.abspath(__file__))
@@ -105,7 +105,7 @@ def lsjson(cesta):
     return json.loads(out)
 DATUM = re.compile(r'(\d{4}-\d{2}-\d{2})')
 OBR = re.compile(r'\.(jpe?g|png|webp|heic|pdf|gif)$', re.I); VID = re.compile(r'\.(mp4|mov|avi|mkv|m4v)$', re.I)
-mat = collections.defaultdict(lambda: dict(plakaty=[], playlist=[], fotky=None, videa=None, pisne=[]))
+mat = collections.defaultdict(lambda: dict(plakaty=[], playlist=[], fotky=None, videa=None, pisne=[], zdroj={}))
 os.makedirs(TU + '/obrazky', exist_ok=True)
 def nahled(cesta, cil, sirka):
     """Zmenšenina souboru z Disku do repa (veřejná); stáhne se jen jednou."""
@@ -118,15 +118,17 @@ def nahled(cesta, cil, sirka):
     subprocess.run(['convert', '-density', '110', vstup, '-auto-orient', '-resize', f'{sirka}x{sirka}>', '-quality', '82', TU + '/' + cil],
                    input=data, check=True)
     return cil
+def otisk(f):  # cache náhledu podle celé cesty a velikosti: přejmenování nebo nová verze = nový náhled
+    return hashlib.md5(f"{f['Path']}|{f['Size']}".encode()).hexdigest()[:8]
 def bezpecne(s): return re.sub(r'[^a-z0-9]+', '-', s.lower().encode('ascii', 'ignore').decode()).strip('-')[:60]
 
 for f in lsjson('Koncerty'):
     if f['IsDir'] or 'Pracovní' in f['Path'] or 'Videopozvánky' in f['Path'] or not OBR.search(f['Name']): continue
     m = DATUM.match(f['Name']) or DATUM.search(f['Path'].split('/')[1] if '/' in f['Path'] else '')
     if not m or not re.search(r'plakát|program|line-up|plakat', f['Path'], re.I): continue
-    d = m.group(1); n = len(mat[d]['plakaty']) + 1; jm = f'{d}-plakat-{n}-{bezpecne(f["Name"])[:20]}'
+    d = m.group(1); jm = f'{d}-plakat-{bezpecne(f["Name"])[:40]}-{otisk(f)}'
     mat[d]['plakaty'].append(dict(mal=nahled('Koncerty/' + f['Path'], f'obrazky/{jm}-m.webp', 360),
-                                  vel=nahled('Koncerty/' + f['Path'], f'obrazky/{jm}.webp', 1400), gif=f['Name'].lower().endswith('.gif')))
+                                  vel=nahled('Koncerty/' + f['Path'], f'obrazky/{jm}.webp', 1400), gif=f['Name'].lower().endswith('.gif'), src=f['Path']))
 for m in mat.values():  # když existuje animovaný plakát, ukáže se jen on (ostatní jsou jeho statické verze)
     if any(p['gif'] for p in m['plakaty']): m['plakaty'] = [p for p in m['plakaty'] if p['gif']]
     for p in m['plakaty']: p.pop('gif')
@@ -138,8 +140,8 @@ for f in lsjson('Písničky/Playlisty'):
             mat[d]['pisne'] = [re.sub(r'^\s*\d+\s*[.)/:-]?\s*', '', l).strip() for l in text.splitlines()
                                if l.strip() and not l.lstrip().startswith('#')]
         elif re.search(r'\.(jpe?g|png|webp)$', f['Name'], re.I):
-            jm = f'{d}-playlist-{bezpecne(f["Name"])[:20]}'
-            mat[d]['playlist'].append(dict(vel=nahled('Písničky/Playlisty/' + f['Path'], f'obrazky/{jm}.webp', 1400)))
+            jm = f'{d}-playlist-{bezpecne(f["Name"])[:40]}-{otisk(f)}'
+            mat[d]['playlist'].append(dict(vel=nahled('Písničky/Playlisty/' + f['Path'], f'obrazky/{jm}.webp', 1400), src=f['Name']))
 DRIVE_F = 'https://drive.google.com/file/d/{}/view'; DRIVE_D = 'https://drive.google.com/drive/folders/{}'
 fv = lsjson('Fotky a videa')
 for f in fv:
@@ -149,11 +151,11 @@ for f in fv:
     d = m.group(1)
     if f['IsDir'] and len(casti) == 2:  # složka akce: RRRR/RRRR-MM-DD Místo, akce/
         uvnitr = [g['Name'] for g in fv if g['Path'].startswith(f['Path'] + '/')]
-        if any(OBR.search(x) for x in uvnitr): mat[d]['fotky'] = DRIVE_D.format(f['ID'])
-        if any(VID.search(x) for x in uvnitr): mat[d]['videa'] = DRIVE_D.format(f['ID'])
+        if any(OBR.search(x) for x in uvnitr): mat[d]['fotky'] = DRIVE_D.format(f['ID']); mat[d]['zdroj']['fotky'] = casti[-1]
+        if any(VID.search(x) for x in uvnitr): mat[d]['videa'] = DRIVE_D.format(f['ID']); mat[d]['zdroj']['videa'] = casti[-1]
     elif not f['IsDir'] and len(casti) == 2:  # jednotlivý soubor přímo v roce
         klic = 'videa' if VID.search(f['Name']) else 'fotky' if OBR.search(f['Name']) else None
-        if klic and not mat[d][klic]: mat[d][klic] = DRIVE_F.format(f['ID'])
+        if klic and not mat[d][klic]: mat[d][klic] = DRIVE_F.format(f['ID']); mat[d]['zdroj'][klic] = casti[-1]
 
 # --- playlisty (pořadí písniček na koncertě): list v tabulce + TXT soubory v Písničky/Playlisty ---
 sl = collections.Counter(); sl_koncerty = set(); z_tabulky = collections.defaultdict(list)
@@ -215,11 +217,33 @@ def sestava_web(t):
     return t[:1].upper() + t[1:] if t else ''
 def fmt(d):
     return d.strftime('%-d. %-m. %Y') if isinstance(d, dt.date) else str(d)
-def materialy(d):
-    m = mat.get(str(d))
+from PIL import Image
+def dhash(cesta):
+    g = Image.open(TU + '/' + cesta).convert('L').resize((9, 8)); px = list(g.getdata())
+    return sum(1 << i for i in range(64) if px[(i // 8) * 9 + i % 8] < px[(i // 8) * 9 + i % 8 + 1])
+def bez_hacku(t): return re.sub(r'[^a-z0-9]', '', __import__('unicodedata').normalize('NFKD', t).encode('ascii', 'ignore').decode().lower())
+def klice(r):  # podle čeho se pozná, že soubor patří k tomuto koncertu: město a začátek názvu akce
+    k = [cisti_mesto(r['mesto'])] + [re.split(r'[–(,]', r['akce'])[0]]
+    return [bez_hacku(x) for x in k if len(bez_hacku(x)) >= 3]
+def materialy(r):
+    d = str(r['d']); m = mat.get(d)
     if not m: return {}
-    return {k: v for k, v in dict(plakaty=m['plakaty'], playlist=m['playlist'], pisne=m['pisne'], fotky=m['fotky'], videa=m['videa']).items() if v}
-seznam = [dict(d=fmt(r['d']), r=rok(r), s=str(r['d']), mesto=r['mesto'], akce=r['akce'], kapely=', '.join(r['kapely']), sestava=sestava_web(r['sestava']), odkazy=r['odkazy'], m=materialy(r['d']))
+    souse = [k for k in kon if str(k['d']) == d]
+    def patri(src):  # víc koncertů v jeden den: soubor patří tomu, jehož místo nebo akce je v názvu
+        if len(souse) < 2: return True
+        s = bez_hacku(src); kdo = [k for k in souse if any(x in s for x in klice(k))]
+        return not kdo or r in kdo
+    plak, otisky = [], []
+    for p in sorted((p for p in m['plakaty'] if patri(p['src'])), key=lambda p: -os.path.getsize(TU + '/' + p['vel'])):
+        h = dhash(p['mal'])
+        if any(bin(h ^ o).count('1') <= 6 for o in otisky): continue  # stejný plakát v jiné verzi: nechá se největší
+        otisky.append(h); plak.append(dict(mal=p['mal'], vel=p['vel']))
+    out = dict(plakaty=plak, playlist=[dict(vel=p['vel']) for p in m['playlist'] if patri(p['src'])],
+               pisne=m['pisne'] if patri('') or len(souse) < 2 else m['pisne'],
+               fotky=m['fotky'] if patri(m['zdroj'].get('fotky', '')) else None,
+               videa=m['videa'] if patri(m['zdroj'].get('videa', '')) else None)
+    return {k: v for k, v in out.items() if v}
+seznam = [dict(d=fmt(r['d']), r=rok(r), s=str(r['d']), mesto=r['mesto'], akce=r['akce'], kapely=', '.join(r['kapely']), sestava=sestava_web(r['sestava']), odkazy=r['odkazy'], m=materialy(r))
           for r in sorted(kon, key=lambda r: str(r['d']), reverse=True)]
 budouci = [dict(d=fmt(r['d']), mesto=r['mesto'], akce=r['akce']) for r in sorted(plan, key=lambda r: str(r['d']))
            if isinstance(r['d'], dt.date) and r['d'] >= dt.date.today()]
