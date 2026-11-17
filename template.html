@@ -77,6 +77,7 @@ th{font:500 11px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;colo
 td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
 td.d{font:13px var(--f-mono);white-space:nowrap;font-variant-numeric:tabular-nums}
 td.k{color:var(--muted);font-size:13px}
+.sest{display:block;margin-top:3px;font-size:12.5px;font-style:italic;color:var(--accent)}
 td.m{white-space:nowrap}
 .mat{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .mat img{height:44px;width:auto;border-radius:3px;border:1px solid var(--line);display:block}
@@ -304,7 +305,7 @@ function tipFor(box) {
   $('#cesty').hidden = false;
   $('#cesty-sub').textContent = `Spočítáno z ${C.n} cest, u kterých se zachovala trasa. Kilometry jsou tam i zpátky.`;
   const R = [
-    [cz(C.km) + ' km', 'najeto na koncerty'],
+    [cz(C.km) + ' km', 'najeto na koncerty' + (C.srov ? ` – to je jako z Jihlavy do <em>${C.srov}</em> (${cz(C.srov_km)} km vzdušnou čarou)` + (C.srov2 && C.srov2 !== C.srov ? `, nebo do <em>${C.srov2}</em> a zpátky` : '') : '')],
     [cz(C.nej_km) + ' km', `nejdelší cesta: <em>${C.nej}</em>`],
     [C.pozde, `nejpozdější odjezd z koncertu: <em>${C.pozde_kde}</em>`],
   ];
@@ -339,7 +340,7 @@ function tipFor(box) {
       if (m.videa) o.push(`<a href="${m.videa}" target="_blank" rel="noopener" title="Videa na kapelním Disku">videa<span class="lock">*</span></a>`);
       return `<div class="mat">${o.join('')}</div>`;
     };
-    $('#tb').innerHTML = rows.map((s, i) => `<tr><td class="d">${s.d}</td><td>${esc(s.mesto || '')}</td><td>${esc(s.akce || '')}</td><td class="k">${esc(s.kapely || '')}</td><td class="m">${mat(s, i)}</td></tr>`
+    $('#tb').innerHTML = rows.map((s, i) => `<tr><td class="d">${s.d}</td><td>${esc(s.mesto || '')}</td><td>${esc(s.akce || '')}${s.sestava ? `<span class="sest">${esc(s.sestava)}</span>` : ''}</td><td class="k">${esc(s.kapely || '')}</td><td class="m">${mat(s, i)}</td></tr>`
       + `<tr class="pl" id="pl-${i}" hidden><td colspan="5">${(s.m && s.m.pisne) ? '<ol>' + s.m.pisne.map(p => '<li>' + esc(p) + '</li>').join('') + '</ol>' : ''}${(s.m && s.m.playlist || []).map(p => `<div class="src"><a href="${p.vel}" target="_blank" rel="noopener">Papír s playlistem</a></div>`).join('')}</td></tr>`).join('');
     window.__rowsSel = rows;
   };

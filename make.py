@@ -39,7 +39,8 @@ for r in ws.iter_rows(min_row=2, values_only=True):
     if not x.get('Datum'): continue
     d = datum(x['Datum']); stav = (x.get('Stav') or '').strip()
     rec = dict(d=d, mesto=(x.get('Město') or '').strip(), akce=(x.get('Klub / akce') or '').strip(),
-               kapely=[k.strip() for k in re.split(r',\s*', x.get('Hráli s námi') or '') if k.strip()])
+               kapely=[k.strip() for k in re.split(r',\s*', x.get('Hráli s námi') or '') if k.strip()],
+               sestava=(x.get('Sestava / kdo chyběl') or '').strip())
     if stav == 'odehráno': kon.append(rec)
     elif stav == 'plánováno': plan.append(rec)
 
@@ -174,14 +175,32 @@ if os.path.exists(CESTY):
     cesty = dict(km=round(tot, -2), n=len(c), nej_km=km(nej)[0] + km(nej)[1], nej=jm(nej),
                  pozde=f'{int(h)}:{int(round(h % 1 * 60)):02d}', pozde_kde=jm(pozde),
                  benz=benz.most_common(1)[0][0] if benz else None, benz_n=sum(benz.values()))
+    # pro legraci: do kterého velkého města je z Jihlavy vzdušnou čarou podobně daleko
+    MESTA = [('Lisabonu', 38.72, -9.14), ('Reykjavíku', 64.15, -21.94), ('Moskvy', 55.76, 37.62), ('Istanbulu', 41.01, 28.98),
+             ('Káhiry', 30.04, 31.24), ('Teheránu', 35.69, 51.39), ('Dubaje', 25.20, 55.27), ('Almaty', 43.24, 76.89),
+             ('Lagosu', 6.52, 3.38), ('Dillí', 28.61, 77.21), ('Nairobi', -1.29, 36.82), ('Bombaje', 19.08, 72.88),
+             ('New Yorku', 40.71, -74.01), ('Montrealu', 45.50, -73.57), ('Pekingu', 39.90, 116.40), ('Bangkoku', 13.76, 100.50),
+             ('Kapského Města', -33.92, 18.42), ('Tokia', 35.68, 139.69), ('Rio de Janeira', -22.91, -43.17), ('Los Angeles', 34.05, -118.24)]
+    def vzd(la, lo, la2=49.3961, lo2=15.5912):
+        f1, f2, dl = map(math.radians, (la, la2, lo2 - lo))
+        return 6371 * math.acos(min(1, math.sin(f1) * math.sin(f2) + math.cos(f1) * math.cos(f2) * math.cos(dl)))
+    mesto, km_m = min(((m, vzd(la, lo)) for m, la, lo in MESTA), key=lambda t: abs(t[1] - tot))
+    mesto2, km_m2 = min(((m, vzd(la, lo)) for m, la, lo in MESTA), key=lambda t: abs(2 * t[1] - tot))
+    cesty.update(srov=mesto, srov_km=int(round(km_m, -2)), srov2=mesto2, srov2_km=int(round(km_m2, -2)))
 
+def sestava_web(t):
+    # na web jen odchylky od běžné sestavy
+    t = re.sub(r'^s Ivkou(\s*\(asi\))?[;,]?\s*', '', t)
+    t = t.replace('bez Ivky', 'nehrála Ivka').replace('místo Pavla bubnoval Vorel', 'nehrál Pavel, bubnoval Vorel')
+    t = t.replace('bez Zdeňka (sax)', 'nehrál Zdeněk (saxofon)').replace('bez saxofonu (Zdeněk)', 'nehrál Zdeněk (saxofon)')
+    return t[:1].upper() + t[1:] if t else ''
 def fmt(d):
     return d.strftime('%-d. %-m. %Y') if isinstance(d, dt.date) else str(d)
 def materialy(d):
     m = mat.get(str(d))
     if not m: return {}
     return {k: v for k, v in dict(plakaty=m['plakaty'], playlist=m['playlist'], pisne=m['pisne'], fotky=m['fotky'], videa=m['videa']).items() if v}
-seznam = [dict(d=fmt(r['d']), r=rok(r), s=str(r['d']), mesto=r['mesto'], akce=r['akce'], kapely=', '.join(r['kapely']), m=materialy(r['d']))
+seznam = [dict(d=fmt(r['d']), r=rok(r), s=str(r['d']), mesto=r['mesto'], akce=r['akce'], kapely=', '.join(r['kapely']), sestava=sestava_web(r['sestava']), m=materialy(r['d']))
           for r in sorted(kon, key=lambda r: str(r['d']), reverse=True)]
 budouci = [dict(d=fmt(r['d']), mesto=r['mesto'], akce=r['akce']) for r in sorted(plan, key=lambda r: str(r['d']))
            if isinstance(r['d'], dt.date) and r['d'] >= dt.date.today()]
