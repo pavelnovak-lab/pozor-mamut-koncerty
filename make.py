@@ -15,7 +15,7 @@ TU = os.path.dirname(os.path.abspath(__file__))
 HOME = os.path.expanduser('~')
 REMOTE = 'gdrive,root_folder_id=1Ns75usanWOJoy2fHk7KD8EFYv58sNub_:Koncerty/Pozor Mamut – evidence koncertů.xlsx'
 CESTY = HOME + '/Dropbox/org-mode/Poznamky/pozor-mamut-cesty.tsv'
-LOGO = TU + '/data/logo_piskove.svg'  # jednobarevný vektor kapely obarvený na pískovou C79250
+LOGO = TU + '/data/logo_1barva.svg'  # 2b jednobarevná verze (bílá, plná), barva = currentColor = barva písma v hlavičce
 
 ap = argparse.ArgumentParser()
 ap.add_argument('--xlsx'); ap.add_argument('--geonames', default=TU + '/data/CZ.txt')
@@ -222,7 +222,7 @@ DATA = dict(sestava=SESTAVA, n=len(kon), mest=len(mista), kapel=len(kap), od=r0,
             nejvic=dict(n=max(x['n'] for x in po_letech), r=[x['r'] for x in po_letech if x['n'] == max(y['n'] for y in po_letech)]))
 
 obrys = json.load(open(TU + '/data/cz_obrys.json'))
-logo = 'data:image/svg+xml;base64,' + base64.b64encode(open(LOGO, 'rb').read()).decode()
+logo = open(LOGO, encoding='utf-8').read()
 html = open(TU + '/template.html', encoding='utf-8').read()
 html = html.replace('__DATA__', json.dumps(DATA, ensure_ascii=False)).replace('__OBRYS__', json.dumps(obrys)).replace('__LOGO__', logo)
 open(TU + '/nahled.html', 'w', encoding='utf-8').write(html)  # fragment pro náhled v Artifactu
@@ -230,5 +230,5 @@ hlava, telo = html.split('<header', 1)
 open(TU + '/index.html', 'w', encoding='utf-8').write(
     '<!doctype html>\n<html lang="cs">\n<head>\n<meta charset="utf-8">\n'
     '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
-    '<link rel="icon" href="' + logo + '">\n' + hlava + '</head>\n<body>\n<header' + telo + '\n</body>\n</html>\n')
+    '<link rel="icon" href="data:image/webp;base64,' + base64.b64encode(open(TU + '/data/logo.webp', 'rb').read()).decode() + '">\n' + hlava + '</head>\n<body>\n<header' + telo + '\n</body>\n</html>\n')
 print(f'index.html: {len(kon)} koncertů, {len(mista)} míst, {len(kap)} kapel, km {cesty.get("km")}')
