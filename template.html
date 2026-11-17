@@ -200,7 +200,7 @@ const cz = n => n.toLocaleString('cs-CZ');
 
 $('#od').textContent = D.od;
 $('#akt').textContent = D.aktualizace;
-$('#lede').textContent = `Od prvního koncertu v jihlavském Bezvědomí v roce ${D.od} jsme odehráli ${D.n} ${plural(D.n,'koncert','koncerty','koncertů')} v ${D.mest} ${plural(D.mest,'městě','městech','městech')}. Nejvíc ${nejRoky()}: ${D.nejvic.n}.`;
+$('#lede').textContent = `Od prvního koncertu (${D.prvni.akce}, ${D.prvni.mesto}) v roce ${D.od} jsme odehráli ${D.n} ${plural(D.n,'koncert','koncerty','koncertů')} v ${D.mest} ${plural(D.mest,'městě','městech','městech')}. Nejvíc ${nejRoky()}: ${D.nejvic.n}.`;
 
 const stats = [[D.n, 'odehraných koncertů'], [D.mest, 'měst a vesnic'], [D.kapel, 'kapel na společných plakátech']];
 if (D.cesty && D.cesty.km) stats.push([cz(D.cesty.km), 'kilometrů na cestách (přibližně)']);

@@ -52,7 +52,8 @@ def rok(r): return r['d'].year if isinstance(r['d'], dt.date) else int(str(r['d'
 # kde kapela hraje nejčastěji; výjimky mimo Vysočinu určuje okres (kód GeoNames admin2).
 OKRES = {'Švihov': '0531',   # Švihov u Miřetic, okres Chrudim
          'Opatov': '0632',   # Opatov u Jihlavy (podle časové osy)
-         'Nemojov': '0525'}  # Nemojov u Dvora Králové (podle časové osy)
+         'Nemojov': '0631',  # Nemojov u Havlíčkova Brodu (Pavel; časová osa ukazovala Dvůr Králové)
+         'Chválkov': '0633'}  # Chválkov u Kamenice nad Lipou (Kravín fest)
 obce = {}
 def lepsi(n, nove, stare):
     if n in OKRES: return nove[4] == OKRES[n] and stare[4] != OKRES[n]
@@ -227,12 +228,13 @@ SESTAVA = [  # kdo kdy přišel a odešel; první koncerty podle evidence
     dict(j='Koks', n='kytara', od='od začátku'),
     dict(j='Zenk', n='zpěv', od='od začátku'),
     dict(j='Pavel', n='bicí', od='od začátku'),
-    dict(j='Vóďa', n='basa', od='22. 10. 2016 – 5. 5. 2018', pozn='první basák, na rozlučce v Bezvědomí hrál půl koncertu; ještě jednou na svých narozeninách v Jamném 17. 5. 2025'),
+    dict(j='Vóďa', n='basa', od='6. 8. 2016 – 5. 5. 2018', pozn='první basák, na rozlučce v Bezvědomí hrál půl koncertu; ještě jednou na svých narozeninách v Jamném 17. 5. 2025'),
     dict(j='Olda', n='basa', od='od 3. 3. 2018', pozn='první koncert v Pelhřimově'),
     dict(j='Zdeněk J.', n='saxofon', od='nejpozději od 19. 3. 2023', pozn='první doklad: fotka ze zkušebny'),
     dict(j='Ivka', n='pozoun', od='od 7. 6. 2025', pozn='první koncert na Pikniku na Keťásku v Jihlavě'),
 ]
-DATA = dict(sestava=SESTAVA, n=len(kon), mest=len(mista), kapel=len(kap), od=r0, roky=po_letech, dny=po_dnech, mapa=mapa,
+prvni = min((r for r in kon if isinstance(r['d'], dt.date)), key=lambda r: r['d'])
+DATA = dict(sestava=SESTAVA, prvni=dict(akce=re.split(r' – ', prvni['akce'])[0], mesto=cisti_mesto(prvni['mesto'])), n=len(kon), mest=len(mista), kapel=len(kap), od=r0, roky=po_letech, dny=po_dnech, mapa=mapa,
             kapely=kapely[:15], pisne=pisne, playlistu=len(sl_koncerty), cesty=cesty, seznam=seznam,
             budouci=budouci, aktualizace=dt.date.today().strftime('%-d. %-m. %Y'),
             nejvic=dict(n=max(x['n'] for x in po_letech), r=[x['r'] for x in po_letech if x['n'] == max(y['n'] for y in po_letech)]))
