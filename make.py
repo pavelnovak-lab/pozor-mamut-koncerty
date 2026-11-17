@@ -40,7 +40,8 @@ for r in ws.iter_rows(min_row=2, values_only=True):
     d = datum(x['Datum']); stav = (x.get('Stav') or '').strip()
     rec = dict(d=d, mesto=(x.get('Město') or '').strip(), akce=(x.get('Klub / akce') or '').strip(),
                kapely=[k.strip() for k in re.split(r',\s*', x.get('Hráli s námi') or '') if k.strip()],
-               sestava=(x.get('Sestava / kdo chyběl') or '').strip())
+               sestava=(x.get('Sestava / kdo chyběl') or '').strip(),
+               odkazy=[dict(t=a.strip(), url=b.strip()) for a, b in (o.split('|', 1) for o in re.split(r';\s*', x.get('Odkazy') or '') if '|' in o)])
     if stav == 'odehráno': kon.append(rec)
     elif stav == 'plánováno': plan.append(rec)
 
@@ -192,7 +193,7 @@ def sestava_web(t):
     # na web jen odchylky od běžné sestavy
     t = re.sub(r'^s Ivkou(\s*\(asi\))?[;,]?\s*', '', t)
     t = t.replace('bez Ivky', 'nehrála Ivka').replace('místo Pavla bubnoval Vorel', 'nehrál Pavel, bubnoval Vorel')
-    t = t.replace('bez Zdeňka (sax)', 'nehrál Zdeněk (saxofon)').replace('bez saxofonu (Zdeněk)', 'nehrál Zdeněk (saxofon)')
+    t = t.replace('bez Zdeňka J. (sax)', 'nehrál Zdeněk J. (saxofon)').replace('bez saxofonu (Zdeněk J.)', 'nehrál Zdeněk J. (saxofon)')
     return t[:1].upper() + t[1:] if t else ''
 def fmt(d):
     return d.strftime('%-d. %-m. %Y') if isinstance(d, dt.date) else str(d)
@@ -200,7 +201,7 @@ def materialy(d):
     m = mat.get(str(d))
     if not m: return {}
     return {k: v for k, v in dict(plakaty=m['plakaty'], playlist=m['playlist'], pisne=m['pisne'], fotky=m['fotky'], videa=m['videa']).items() if v}
-seznam = [dict(d=fmt(r['d']), r=rok(r), s=str(r['d']), mesto=r['mesto'], akce=r['akce'], kapely=', '.join(r['kapely']), sestava=sestava_web(r['sestava']), m=materialy(r['d']))
+seznam = [dict(d=fmt(r['d']), r=rok(r), s=str(r['d']), mesto=r['mesto'], akce=r['akce'], kapely=', '.join(r['kapely']), sestava=sestava_web(r['sestava']), odkazy=r['odkazy'], m=materialy(r['d']))
           for r in sorted(kon, key=lambda r: str(r['d']), reverse=True)]
 budouci = [dict(d=fmt(r['d']), mesto=r['mesto'], akce=r['akce']) for r in sorted(plan, key=lambda r: str(r['d']))
            if isinstance(r['d'], dt.date) and r['d'] >= dt.date.today()]

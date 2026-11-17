@@ -338,6 +338,7 @@ function tipFor(box) {
       if ((m.pisne || []).length || (m.playlist || []).length) o.push(`<button type="button" data-pl="${i}" aria-expanded="false">playlist${m.pisne ? ' (' + m.pisne.length + ')' : ''}</button>`);
       if (m.fotky) o.push(`<a href="${m.fotky}" target="_blank" rel="noopener" title="Fotky na kapelním Disku">fotky<span class="lock">*</span></a>`);
       if (m.videa) o.push(`<a href="${m.videa}" target="_blank" rel="noopener" title="Videa na kapelním Disku">videa<span class="lock">*</span></a>`);
+      (s.odkazy || []).forEach(l => { if (/^https:\/\//.test(l.url)) o.push(`<a href="${esc(l.url)}" target="_blank" rel="noopener" title="Veřejný záznam">▶ ${esc(l.t)}</a>`); });
       return `<div class="mat">${o.join('')}</div>`;
     };
     $('#tb').innerHTML = rows.map((s, i) => `<tr><td class="d">${s.d}</td><td>${esc(s.mesto || '')}</td><td>${esc(s.akce || '')}${s.sestava ? `<span class="sest">${esc(s.sestava)}</span>` : ''}</td><td class="k">${esc(s.kapely || '')}</td><td class="m">${mat(s, i)}</td></tr>`
