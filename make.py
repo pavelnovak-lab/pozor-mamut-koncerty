@@ -213,7 +213,7 @@ SESTAVA = [  # kdo kdy přišel a odešel; první koncerty podle evidence
     dict(j='Zenk', n='zpěv', od='od začátku'),
     dict(j='Vóďa', n='basa', od='22. 10. 2016 – 5. 5. 2018', pozn='první basák, na rozlučce v Bezvědomí hrál půl koncertu; ještě jednou na svých narozeninách v Jamném 17. 5. 2025'),
     dict(j='Olda', n='basa', od='od 3. 3. 2018', pozn='první koncert v Pelhřimově'),
-    dict(j='Zdeněk J.', n='saxofon', od='nejpozději od roku 2023'),
+    dict(j='Zdeněk J.', n='saxofon', od='nejpozději od 19. 3. 2023', pozn='první doklad: fotka ze zkušebny'),
     dict(j='Ivka', n='pozoun', od='od 7. 6. 2025', pozn='první koncert na Pikniku na Keťásku v Jihlavě'),
 ]
 DATA = dict(sestava=SESTAVA, n=len(kon), mest=len(mista), kapel=len(kap), od=r0, roky=po_letech, dny=po_dnech, mapa=mapa,
