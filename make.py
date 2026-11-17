@@ -15,7 +15,7 @@ TU = os.path.dirname(os.path.abspath(__file__))
 HOME = os.path.expanduser('~')
 REMOTE = 'gdrive,root_folder_id=1Ns75usanWOJoy2fHk7KD8EFYv58sNub_:Koncerty/Pozor Mamut – evidence koncertů.xlsx'
 CESTY = HOME + '/Dropbox/org-mode/Poznamky/pozor-mamut-cesty.tsv'
-LOGO = TU + '/data/logo_1barva.svg'  # 2b jednobarevná verze (bílá, plná) v barvě písma hlavičky (currentColor) + okno značky (p25 p26 z 2a) v --logo-okno; oči a kly z 2a v barvě písma s bordó obrysy (černé a hnědé vrstvy 2a v --band, oříznuté maskou kolem p41 p42 p31 p32 p46 p47)
+LOGO = TU + '/data/logo_1barva.svg'  # 2b bílá plná v barvě písma (currentColor); výstražný trojúhelník z 2a v --logo-troj s vnitřním lemem, okno, oči a kly v barvě písma, obrysy v --band
 
 ap = argparse.ArgumentParser()
 ap.add_argument('--xlsx'); ap.add_argument('--geonames', default=TU + '/data/CZ.txt')
