@@ -77,6 +77,9 @@ th{font:500 11px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;colo
 td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
 td.d{font:13px var(--f-mono);white-space:nowrap;font-variant-numeric:tabular-nums}
 td.k{color:var(--muted);font-size:13px}
+.clenove{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:12px}
+.clen{border:1px solid var(--line,rgba(127,127,127,.3));border-radius:6px;padding:10px 12px}
+.clen b{font-size:17px}.clen i{color:var(--accent);font-style:normal;margin-left:6px}.clen span{display:block;font-size:13px;color:var(--muted);margin-top:3px}
 .sest{display:block;margin-top:3px;font-size:12.5px;font-style:italic;color:var(--accent)}
 td.m{white-space:nowrap}
 .mat{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
@@ -162,6 +165,11 @@ a{color:var(--accent)}
     <h2>Co hrajeme</h2>
     <p class="sub" id="pisne-sub"></p>
     <div class="hbars" id="pisne-list"></div>
+  </section>
+
+  <section id="sestava">
+    <h2>Sestava v čase</h2>
+    <div class="clenove" id="clenove"></div>
   </section>
 
   <section id="seznam">
@@ -320,6 +328,12 @@ function tipFor(box) {
   $('#pisne-sub').textContent = `Z ${D.playlistu} ${plural(D.playlistu,'dochovaného playlistu','dochovaných playlistů','dochovaných playlistů')}. Každý další dochovaný papír s playlistem pomůže.`;
   const mx = P[0].n;
   $('#pisne-list').innerHTML = P.slice(0, 16).map(p => `<div class="hb"><span class="k">${p.p}</span><span class="t"><i style="width:${p.n / mx * 100}%"></i></span><span class="n">${p.n}</span></div>`).join('');
+})();
+
+// --- sestava ---
+(function () {
+  const e = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  $('#clenove').innerHTML = (D.sestava || []).map(c => `<div class="clen"><b>${e(c.j)}</b><i>${e(c.n)}</i><span>${e(c.od)}${c.pozn ? ' · ' + e(c.pozn) : ''}</span></div>`).join('');
 })();
 
 // --- seznam ---

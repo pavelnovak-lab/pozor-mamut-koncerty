@@ -193,7 +193,8 @@ def sestava_web(t):
     # na web jen odchylky od běžné sestavy
     t = re.sub(r'^s Ivkou(\s*\(asi\))?[;,]?\s*', '', t)
     t = t.replace('bez Ivky', 'nehrála Ivka').replace('místo Pavla bubnoval Vorel', 'nehrál Pavel, bubnoval Vorel')
-    t = t.replace('bez Zdeňka J. (sax)', 'nehrál Zdeněk J. (saxofon)').replace('bez saxofonu (Zdeněk J.)', 'nehrál Zdeněk J. (saxofon)')
+    t = t.replace('bez Zdeňka J. (sax)', 'nehrál Zdeněk J. (saxofon)').replace('(basa Vóďa)', '').replace('bez saxofonu (Zdeněk J.)', 'nehrál Zdeněk J. (saxofon)')
+    t = t.strip()
     return t[:1].upper() + t[1:] if t else ''
 def fmt(d):
     return d.strftime('%-d. %-m. %Y') if isinstance(d, dt.date) else str(d)
@@ -206,7 +207,16 @@ seznam = [dict(d=fmt(r['d']), r=rok(r), s=str(r['d']), mesto=r['mesto'], akce=r[
 budouci = [dict(d=fmt(r['d']), mesto=r['mesto'], akce=r['akce']) for r in sorted(plan, key=lambda r: str(r['d']))
            if isinstance(r['d'], dt.date) and r['d'] >= dt.date.today()]
 
-DATA = dict(n=len(kon), mest=len(mista), kapel=len(kap), od=r0, roky=po_letech, dny=po_dnech, mapa=mapa,
+SESTAVA = [  # kdo kdy přišel a odešel; první koncerty podle evidence
+    dict(j='Pavel', n='bicí', od='od začátku'),
+    dict(j='Koks', n='kytara', od='od začátku'),
+    dict(j='Zenk', n='zpěv', od='od začátku'),
+    dict(j='Vóďa', n='basa', od='22. 10. 2016 – 5. 5. 2018', pozn='první basák, na rozlučce v Bezvědomí hrál půl koncertu; ještě jednou na svých narozeninách v Jamném 17. 5. 2025'),
+    dict(j='Olda', n='basa', od='od 3. 3. 2018', pozn='první koncert v Pelhřimově'),
+    dict(j='Zdeněk J.', n='saxofon', od='nejpozději od roku 2023'),
+    dict(j='Ivka', n='pozoun', od='od 7. 6. 2025', pozn='první koncert na Pikniku na Keťásku v Jihlavě'),
+]
+DATA = dict(sestava=SESTAVA, n=len(kon), mest=len(mista), kapel=len(kap), od=r0, roky=po_letech, dny=po_dnech, mapa=mapa,
             kapely=kapely[:15], pisne=pisne, playlistu=len(sl_koncerty), cesty=cesty, seznam=seznam,
             budouci=budouci, aktualizace=dt.date.today().strftime('%-d. %-m. %Y'),
             nejvic=dict(n=max(x['n'] for x in po_letech), r=[x['r'] for x in po_letech if x['n'] == max(y['n'] for y in po_letech)]))
