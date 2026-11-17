@@ -255,7 +255,7 @@ SESTAVA = [  # kdo kdy přišel a odešel; první koncerty podle evidence
     dict(j='Pavel', n='bicí', od='od začátku'),
     dict(j='Vóďa', n='basa', od='6. 8. 2016 – 5. 5. 2018', pozn='první basák, na rozlučce v Bezvědomí hrál půl koncertu; ještě jednou na svých narozeninách v Jamném 17. 5. 2025'),
     dict(j='Olda', n='basa', od='od 3. 3. 2018', pozn='první koncert v Pelhřimově'),
-    dict(j='Zdeněk J.', n='saxofon', od='nejpozději od 19. 3. 2023', pozn='první doklad: fotka ze zkušebny'),
+    dict(j='Zdeněk J.', n='saxofon', od='od prosince 2022', pozn='poprvé se o jeho přidání mluvilo na koncertě ve Zborné 10. 12. 2022'),
     dict(j='Ivka', n='pozoun', od='od 7. 6. 2025', pozn='první koncert na Pikniku na Keťásku v Jihlavě'),
 ]
 prvni = min((r for r in kon if isinstance(r['d'], dt.date)), key=lambda r: r['d'])
