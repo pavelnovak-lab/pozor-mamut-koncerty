@@ -48,11 +48,20 @@ for r in ws.iter_rows(min_row=2, values_only=True):
 def rok(r): return r['d'].year if isinstance(r['d'], dt.date) else int(str(r['d'])[:4])
 
 # --- obce: souřadnice z GeoNames ---
+# Jmenovců je hodně (Švihov 5×, Mostiště 2×). Přednost má obec v kraji Vysočina (kód 80),
+# kde kapela hraje nejčastěji; výjimky mimo Vysočinu určuje okres (kód GeoNames admin2).
+OKRES = {'Švihov': '0531',   # Švihov u Miřetic, okres Chrudim
+         'Opatov': '0632',   # Opatov u Jihlavy (podle časové osy)
+         'Nemojov': '0525'}  # Nemojov u Dvora Králové (podle časové osy)
 obce = {}
+def lepsi(n, nove, stare):
+    if n in OKRES: return nove[4] == OKRES[n] and stare[4] != OKRES[n]
+    if (nove[3] == '80') != (stare[3] == '80'): return nove[3] == '80'
+    return nove[2] > stare[2]
 for r in csv.reader(open(a.geonames, encoding='utf-8'), delimiter='\t', quoting=csv.QUOTE_NONE):
     if r[6] != 'P': continue
-    n, la, lo, pop = r[1], float(r[4]), float(r[5]), int(r[14] or 0)
-    if n not in obce or pop > obce[n][2]: obce[n] = (la, lo, pop)
+    x = (float(r[4]), float(r[5]), int(r[14] or 0), r[10], r[11])
+    if r[1] not in obce or lepsi(r[1], x, obce[r[1]]): obce[r[1]] = x
 obce.setdefault('Praha', (50.0880, 14.4208, 1300000))
 def cisti_mesto(m):
     m = re.sub(r'\s*\(.*?\)', '', m).strip()
