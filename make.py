@@ -52,7 +52,7 @@ def rok(r): return r['d'].year if isinstance(r['d'], dt.date) else int(str(r['d'
 # kde kapela hraje nejčastěji; výjimky mimo Vysočinu určuje okres (kód GeoNames admin2).
 OKRES = {'Švihov': '0531',   # Švihov u Miřetic, okres Chrudim
          'Opatov': '0632',   # Opatov u Jihlavy (podle časové osy)
-         'Nemojov': '0631',  # Nemojov u Havlíčkova Brodu (Pavel; časová osa ukazovala Dvůr Králové)
+         'Nemojov': '0525',  # (Dolní) Nemojov u Dvora Králové – časová osa: ze zkušebny přes Brod, Chrudim, Hradec, přespání, návrat do zkušebny
          'Chválkov': '0633'}  # Chválkov u Kamenice nad Lipou (Kravín fest)
 obce = {}
 def lepsi(n, nove, stare):
