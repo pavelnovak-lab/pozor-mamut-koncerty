@@ -80,7 +80,8 @@ mapa = [dict(m=m, n=n, la=obce[m][0], lo=obce[m][1]) for m, n in mista.items() i
 
 # --- kapely ---
 ALIAS = {'bermudskéj kvádr': 'Bermudskej kvádr', 'bermudský kvádr': 'Bermudskej kvádr', 'bermudskej kvádr': 'Bermudskej kvádr',
-         'hak mak': 'Hakmak', 'hakmak': 'Hakmak', 'exploze jádra': 'Exploze jádra'}
+         'hak mak': 'Hakmak', 'hakmak': 'Hakmak', 'exploze jádra': 'Exploze jádra',
+         'paní kolombová': 'Mrs Columbo', 'paní colombová': 'Mrs Columbo', 'mrs columbo': 'Mrs Columbo', 'mrs. columbo': 'Mrs Columbo'}
 kap = collections.Counter(); kap_jmeno = {}
 for r in kon:
     for k in r['kapely']:
