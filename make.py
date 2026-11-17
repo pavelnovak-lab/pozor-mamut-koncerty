@@ -15,7 +15,7 @@ TU = os.path.dirname(os.path.abspath(__file__))
 HOME = os.path.expanduser('~')
 REMOTE = 'gdrive,root_folder_id=1Ns75usanWOJoy2fHk7KD8EFYv58sNub_:Koncerty/Pozor Mamut – evidence koncertů.xlsx'
 CESTY = HOME + '/Dropbox/org-mode/Poznamky/pozor-mamut-cesty.tsv'
-LOGO = TU + '/data/logo.webp'
+LOGO = TU + '/data/logo_piskove.svg'  # jednobarevný vektor kapely obarvený na pískovou C79250
 
 ap = argparse.ArgumentParser()
 ap.add_argument('--xlsx'); ap.add_argument('--geonames', default=TU + '/data/CZ.txt')
@@ -222,7 +222,7 @@ DATA = dict(sestava=SESTAVA, n=len(kon), mest=len(mista), kapel=len(kap), od=r0,
             nejvic=dict(n=max(x['n'] for x in po_letech), r=[x['r'] for x in po_letech if x['n'] == max(y['n'] for y in po_letech)]))
 
 obrys = json.load(open(TU + '/data/cz_obrys.json'))
-logo = 'data:image/webp;base64,' + base64.b64encode(open(LOGO, 'rb').read()).decode()
+logo = 'data:image/svg+xml;base64,' + base64.b64encode(open(LOGO, 'rb').read()).decode()
 html = open(TU + '/template.html', encoding='utf-8').read()
 html = html.replace('__DATA__', json.dumps(DATA, ensure_ascii=False)).replace('__OBRYS__', json.dumps(obrys)).replace('__LOGO__', logo)
 open(TU + '/nahled.html', 'w', encoding='utf-8').write(html)  # fragment pro náhled v Artifactu
