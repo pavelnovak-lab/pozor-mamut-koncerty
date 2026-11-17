@@ -15,7 +15,7 @@ TU = os.path.dirname(os.path.abspath(__file__))
 HOME = os.path.expanduser('~')
 REMOTE = 'gdrive,root_folder_id=1Ns75usanWOJoy2fHk7KD8EFYv58sNub_:Koncerty/Pozor Mamut – evidence koncertů.xlsx'
 CESTY = HOME + '/Dropbox/org-mode/Poznamky/pozor-mamut-cesty.tsv'
-LOGO = TU + '/data/logo_1barva.svg'  # 2b jednobarevná verze (bílá, plná) v barvě písma hlavičky (currentColor) + okno značky (tvary p25, p26 z 2a barevné verze) v --logo-okno
+LOGO = TU + '/data/logo_1barva.svg'  # 2b jednobarevná verze (bílá, plná) v barvě písma hlavičky (currentColor) + okno značky, bělmo, odlesky a kly (tvary p25 p26, p41 p42, p85 p86, p31 p32 p46 p47 z 2a barevné verze) v --logo-okno
 
 ap = argparse.ArgumentParser()
 ap.add_argument('--xlsx'); ap.add_argument('--geonames', default=TU + '/data/CZ.txt')
@@ -63,6 +63,7 @@ for r in csv.reader(open(a.geonames, encoding='utf-8'), delimiter='\t', quoting=
     x = (float(r[4]), float(r[5]), int(r[14] or 0), r[10], r[11])
     if r[1] not in obce or lepsi(r[1], x, obce[r[1]]): obce[r[1]] = x
 obce.setdefault('Praha', (50.0880, 14.4208, 1300000))
+obce.setdefault('Rounek', (49.4275, 15.4790, 0))  # část Vyskytné nad Jihlavou, v GeoNames chybí
 def cisti_mesto(m):
     m = re.sub(r'\s*\(.*?\)', '', m).strip()
     return {'Škrovád': 'Slatiňany', 'Horní Pohleď': 'Pohleď', 'Vyskytná nad Jihlavou': 'Vyskytná nad Jihlavou'}.get(m, m)
@@ -102,13 +103,16 @@ def lsjson(cesta):
     out = subprocess.run(['rclone', 'lsjson', '-R', '--no-modtime', ROOT + cesta], check=True, capture_output=True, text=True).stdout
     return json.loads(out)
 DATUM = re.compile(r'(\d{4}-\d{2}-\d{2})')
-OBR = re.compile(r'\.(jpe?g|png|webp|heic|pdf)$', re.I); VID = re.compile(r'\.(mp4|mov|avi|mkv|m4v)$', re.I)
+OBR = re.compile(r'\.(jpe?g|png|webp|heic|pdf|gif)$', re.I); VID = re.compile(r'\.(mp4|mov|avi|mkv|m4v)$', re.I)
 mat = collections.defaultdict(lambda: dict(plakaty=[], playlist=[], fotky=None, videa=None, pisne=[]))
 os.makedirs(TU + '/obrazky', exist_ok=True)
 def nahled(cesta, cil, sirka):
     """Zmenšenina souboru z Disku do repa (veřejná); stáhne se jen jednou."""
     if os.path.exists(TU + '/' + cil): return cil
     data = subprocess.run(['rclone', 'cat', ROOT + cesta], check=True, capture_output=True).stdout
+    if cesta.lower().endswith('.gif'):  # animovaný plakát → animované WebP
+        subprocess.run(['convert', 'gif:-', '-coalesce', '-resize', f'{sirka}x{sirka}>', '-quality', '70', TU + '/' + cil], input=data, check=True)
+        return cil
     vstup = '-[0]' if cesta.lower().endswith(('.pdf', '.heic')) else '-'
     subprocess.run(['convert', '-density', '110', vstup, '-auto-orient', '-resize', f'{sirka}x{sirka}>', '-quality', '82', TU + '/' + cil],
                    input=data, check=True)
@@ -121,7 +125,10 @@ for f in lsjson('Koncerty'):
     if not m or not re.search(r'plakát|program|line-up|plakat', f['Path'], re.I): continue
     d = m.group(1); n = len(mat[d]['plakaty']) + 1; jm = f'{d}-plakat-{n}-{bezpecne(f["Name"])[:20]}'
     mat[d]['plakaty'].append(dict(mal=nahled('Koncerty/' + f['Path'], f'obrazky/{jm}-m.webp', 360),
-                                  vel=nahled('Koncerty/' + f['Path'], f'obrazky/{jm}.webp', 1400)))
+                                  vel=nahled('Koncerty/' + f['Path'], f'obrazky/{jm}.webp', 1400), gif=f['Name'].lower().endswith('.gif')))
+for m in mat.values():  # když existuje animovaný plakát, ukáže se jen on (ostatní jsou jeho statické verze)
+    if any(p['gif'] for p in m['plakaty']): m['plakaty'] = [p for p in m['plakaty'] if p['gif']]
+    for p in m['plakaty']: p.pop('gif')
 for f in lsjson('Písničky/Playlisty'):
     if f['IsDir']: continue
     for d in DATUM.findall(f['Name']):
@@ -217,9 +224,9 @@ budouci = [dict(d=fmt(r['d']), mesto=r['mesto'], akce=r['akce']) for r in sorted
            if isinstance(r['d'], dt.date) and r['d'] >= dt.date.today()]
 
 SESTAVA = [  # kdo kdy přišel a odešel; první koncerty podle evidence
-    dict(j='Pavel', n='bicí', od='od začátku'),
     dict(j='Koks', n='kytara', od='od začátku'),
     dict(j='Zenk', n='zpěv', od='od začátku'),
+    dict(j='Pavel', n='bicí', od='od začátku'),
     dict(j='Vóďa', n='basa', od='22. 10. 2016 – 5. 5. 2018', pozn='první basák, na rozlučce v Bezvědomí hrál půl koncertu; ještě jednou na svých narozeninách v Jamném 17. 5. 2025'),
     dict(j='Olda', n='basa', od='od 3. 3. 2018', pozn='první koncert v Pelhřimově'),
     dict(j='Zdeněk J.', n='saxofon', od='nejpozději od 19. 3. 2023', pozn='první doklad: fotka ze zkušebny'),
