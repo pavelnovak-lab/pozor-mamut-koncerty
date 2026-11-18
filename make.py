@@ -157,6 +157,11 @@ for f in fv:
     elif not f['IsDir'] and len(casti) == 2:  # jednotlivý soubor přímo v roce
         klic = 'videa' if VID.search(f['Name']) else 'fotky' if OBR.search(f['Name']) else None
         if klic and not mat[d][klic]: mat[d][klic] = DRIVE_F.format(f['ID']); mat[d]['zdroj'][klic] = casti[-1]
+# co se na web nedostane: v roční složce bez celého data na začátku názvu
+# (záměrně nezařazené „RRRR-MM …“ a Zkušebna a studio se nehlásí)
+nezarazene = sorted({'/'.join(f['Path'].split('/')[:2]) for f in fv
+                     if re.fullmatch(r'\d{4}', f['Path'].split('/')[0]) and len(f['Path'].split('/')) >= 2
+                     and not DATUM.match(f['Path'].split('/')[1]) and not re.match(r'\d{4}-\d{2} ', f['Path'].split('/')[1])})
 
 # --- playlisty (pořadí písniček na koncertě): list v tabulce + TXT soubory v Písničky/Playlisty ---
 sl = collections.Counter(); sl_koncerty = set(); z_tabulky = collections.defaultdict(list)
@@ -275,3 +280,10 @@ open(TU + '/index.html', 'w', encoding='utf-8').write(
     '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
     '<link rel="icon" href="data:image/webp;base64,' + base64.b64encode(open(TU + '/data/logo.webp', 'rb').read()).decode() + '">\n' + hlava + '</head>\n<body>\n<header' + telo + '\n</body>\n</html>\n')
 print(f'index.html: {len(kon)} koncertů, {len(mista)} míst, {len(kap)} kapel, km {cesty.get("km")}')
+bez_koncertu = sorted({m['zdroj'][k] for d, m in mat.items() for k in ('fotky', 'videa')
+                       if m['zdroj'].get(k) and d not in {str(r['d']) for r in kon}
+                       and not re.search(r'zkušebn|nahrávání|studio', m['zdroj'][k], re.I)})
+if nezarazene or bez_koncertu:
+    print('\nNa web se nedostalo (Fotky a videa):')
+    for p in nezarazene: print('  název nezačíná datem RRRR-MM-DD:', p)
+    for p in bez_koncertu: print('  datum není v tabulce koncertů:', p)
