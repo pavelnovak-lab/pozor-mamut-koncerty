@@ -3,7 +3,7 @@
 
 Zdroje:
   - Google tabulka „Koncerty/Pozor Mamut – evidence koncertů“ (stáhne se přes rclone jako xlsx),
-  - souhrny cest z ~/Dropbox/org-mode/Poznamky/pozor-mamut-cesty.tsv (soukromé; na stránku jdou
+  - souhrny cest z ~/Dropbox/Kapela/pozor-mamut-cesty.tsv (soukromé; na stránku jdou
     jen součty a rekordy, žádné časy ani místa jednotlivých cest),
   - GeoNames CZ.txt (souřadnice obcí), data/cz_obrys.json (obrys ČR, Natural Earth).
 Použití:  python3 make.py [--xlsx soubor.xlsx] [--geonames CZ.txt]
@@ -14,7 +14,7 @@ import openpyxl
 TU = os.path.dirname(os.path.abspath(__file__))
 HOME = os.path.expanduser('~')
 REMOTE = 'gdrive,root_folder_id=1Ns75usanWOJoy2fHk7KD8EFYv58sNub_:Koncerty/Pozor Mamut – evidence koncertů.xlsx'
-CESTY = HOME + '/Dropbox/org-mode/Poznamky/pozor-mamut-cesty.tsv'
+CESTY = HOME + '/Dropbox/Kapela/pozor-mamut-cesty.tsv'
 LOGO = TU + '/data/logo_1barva.svg'  # 2b bílá plná v barvě písma (currentColor); výstražný trojúhelník z 2a v --logo-troj s vnitřním lemem, okno, oči a kly v barvě písma, obrysy v --band
 
 ap = argparse.ArgumentParser()
