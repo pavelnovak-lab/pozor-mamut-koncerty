@@ -354,6 +354,7 @@ function tipFor(box) {
       (m.plakaty || []).forEach(p => o.push(`<a href="${p.vel}" target="_blank" rel="noopener" title="Plakát"><img src="${p.mal}" alt="Plakát ${esc(s.d)}" loading="lazy"></a>`));
       if ((m.pisne || []).length || (m.playlist || []).length) o.push(`<button type="button" data-pl="${i}" aria-expanded="false">playlist${m.pisne ? ' (' + m.pisne.length + ')' : ''}</button>`);
       if (m.fotky) o.push(`<a href="${m.fotky}" target="_blank" rel="noopener" title="Fotky na kapelním Disku">fotky<span class="lock">*</span></a>`);
+      (m.pozvanky || []).forEach((u, j, v) => o.push(`<a href="${u}" target="_blank" rel="noopener" title="Videopozvánka na kapelním Disku">pozvánka${v.length > 1 ? ' ' + (j + 1) : ''}<span class="lock">*</span></a>`));
       if (m.videa) o.push(`<a href="${m.videa}" target="_blank" rel="noopener" title="Videa na kapelním Disku">videa<span class="lock">*</span></a>`);
       (s.odkazy || []).forEach(l => { if (/^https:\/\//.test(l.url)) o.push(`<a href="${esc(l.url)}" target="_blank" rel="noopener" title="Veřejný záznam">▶ ${esc(l.t)}</a>`); });
       return `<div class="mat">${o.join('')}</div>`;

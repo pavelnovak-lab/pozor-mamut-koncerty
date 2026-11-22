@@ -106,7 +106,7 @@ def lsjson(cesta):
     return json.loads(out)
 DATUM = re.compile(r'(\d{4}-\d{2}-\d{2})')
 OBR = re.compile(r'\.(jpe?g|png|webp|heic|pdf|gif)$', re.I); VID = re.compile(r'\.(mp4|mov|avi|mkv|m4v)$', re.I)
-mat = collections.defaultdict(lambda: dict(plakaty=[], playlist=[], fotky=None, videa=None, pisne=[], zdroj={}))
+mat = collections.defaultdict(lambda: dict(plakaty=[], playlist=[], fotky=None, videa=None, pozvanky=[], pisne=[], zdroj={}))
 os.makedirs(TU + '/obrazky', exist_ok=True)
 def nahled(cesta, cil, sirka):
     """Zmenšenina souboru z Disku do repa (veřejná); stáhne se jen jednou."""
@@ -133,6 +133,11 @@ for f in lsjson('Koncerty'):
 for m in mat.values():  # když existuje animovaný plakát, ukáže se jen on (ostatní jsou jeho statické verze)
     if any(p['gif'] for p in m['plakaty']): m['plakaty'] = [p for p in m['plakaty'] if p['gif']]
     for p in m['plakaty']: p.pop('gif')
+# videopozvánky: Koncerty/Videopozvánky/RRRR-MM-DD Místo, akce – videopozvánka (autor) NN.mp4
+for f in sorted(lsjson('Koncerty/Videopozvánky'), key=lambda f: f['Name']):
+    m = DATUM.match(f['Name'])
+    if f['IsDir'] or not m or not VID.search(f['Name']): continue
+    mat[m.group(1)]['pozvanky'].append(dict(url='https://drive.google.com/file/d/{}/view'.format(f['ID']), src=f['Name']))
 for f in lsjson('Písničky/Playlisty'):
     if f['IsDir']: continue
     for d in DATUM.findall(f['Name']):
@@ -247,7 +252,8 @@ def materialy(r):
     out = dict(plakaty=plak, playlist=[dict(vel=p['vel']) for p in m['playlist'] if patri(p['src'])],
                pisne=m['pisne'] if patri('') or len(souse) < 2 else m['pisne'],
                fotky=m['fotky'] if patri(m['zdroj'].get('fotky', '')) else None,
-               videa=m['videa'] if patri(m['zdroj'].get('videa', '')) else None)
+               videa=m['videa'] if patri(m['zdroj'].get('videa', '')) else None,
+               pozvanky=[p['url'] for p in m['pozvanky'] if patri(p['src'])])
     return {k: v for k, v in out.items() if v}
 seznam = [dict(d=fmt(r['d']), r=rok(r), s=str(r['d']), mesto=r['mesto'], akce=r['akce'], kapely=', '.join(r['kapely']), sestava=sestava_web(r['sestava']), odkazy=r['odkazy'], m=materialy(r))
           for r in sorted(kon, key=lambda r: str(r['d']), reverse=True)]
