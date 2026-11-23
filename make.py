@@ -260,14 +260,14 @@ seznam = [dict(d=fmt(r['d']), r=rok(r), s=str(r['d']), mesto=r['mesto'], akce=r[
 budouci = [dict(d=fmt(r['d']), mesto=r['mesto'], akce=r['akce']) for r in sorted(plan, key=lambda r: str(r['d']))
            if isinstance(r['d'], dt.date) and r['d'] >= dt.date.today()]
 
-SESTAVA = [  # kdo kdy přišel a odešel; první koncerty podle evidence
+SESTAVA = [  # kdo kdy přišel a odešel; první koncerty podle evidence; bývalí členové na konci
     dict(j='Koks', n='kytara', od='od začátku'),
     dict(j='Zenk', n='zpěv', od='od začátku'),
     dict(j='Pavel', n='bicí', od='od začátku'),
-    dict(j='Vóďa', n='basa', od='6. 8. 2016 – 5. 5. 2018', pozn='první basák, na rozlučce v Bezvědomí hrál půl koncertu; ještě jednou na svých narozeninách v Jamném 17. 5. 2025'),
     dict(j='Olda', n='basa', od='od 3. 3. 2018', pozn='první koncert v Pelhřimově'),
     dict(j='Zdeněk J.', n='saxofon', od='od prosince 2022', pozn='poprvé se o jeho přidání mluvilo na koncertě ve Zborné 10. 12. 2022'),
     dict(j='Ivka', n='pozoun', od='od 7. 6. 2025', pozn='první koncert na Pikniku na Keťásku v Jihlavě'),
+    dict(j='Vóďa', n='basa', od='6. 8. 2016 – 5. 5. 2018', pozn='první basák, na rozlučce v Bezvědomí hrál půl koncertu; ještě jednou na svých narozeninách v Jamném 17. 5. 2025'),
 ]
 prvni = min((r for r in kon if isinstance(r['d'], dt.date)), key=lambda r: r['d'])
 DATA = dict(sestava=SESTAVA, prvni=dict(akce=re.split(r' – ', prvni['akce'])[0], mesto=cisti_mesto(prvni['mesto'])), n=len(kon), mest=len(mista), kapel=len(kap), od=r0, roky=po_letech, dny=po_dnech, mapa=mapa,
