@@ -212,7 +212,7 @@ st_klic = lambda f: (f['Path'].split('/')[0][:7], len(f['Path'].split('/')) == 2
 # Různé názvy téže písničky sjednotí VARIANTY (klíč = název bez háčků a mezer).
 VARIANTY = {'jaro': 'Jaro (Sněženky u popelnic)', 'snezenkyupopelnic': 'Jaro (Sněženky u popelnic)',
             'titanivtartaru': 'Titáni', 'gember': 'Gambler', 'spravnejcas': 'Je správnej čas',
-            'blinky': 'Blinky 182'}
+            'blinky': 'Blinky 182', 'reggae': 'Sláva sláva slunci', 'houby': 'Otrávená', 'zitrauzlidinebudou': 'Lachtan'}
 MESICE = 'leden|únor|březen|duben|květen|červen|červenec|srpen|září|říjen|listopad|prosinec'
 def nazev_pisne(nazev):
     n = re.sub(r'\.[A-Za-z0-9]{2,5}$', '', nazev).replace('_', ' ')
@@ -222,8 +222,13 @@ def nazev_pisne(nazev):
     n = re.sub(r'\s*\(.*?\)', '', n); n = re.sub(r'\s+-\s+studio.*$|\s+mix\s*\d+$|\s+\d+\.?\s*(mix|verze)$', '', n, flags=re.I)
     n = re.sub(rf'\s+({MESICE})\s+\d{{4}}$', '', n, flags=re.I); n = re.sub(r'\s+\d+$', '', n).strip(' -')
     return n[:1].upper() + n[1:]
+# veřejné odkazy a poznámky k písničkám (ručně)
+PISNE_EXTRA = {
+    'Prior': dict(pozn='původně od naší předchozí kapely AFT', odkazy=[('YouTube (AFT)', 'https://www.youtube.com/watch?v=fSoc_gfuWu8')]),
+    'Eskymačka': dict(pozn='původně od naší předchozí kapely AFT', odkazy=[('YouTube (AFT)', 'https://www.youtube.com/watch?v=Tr0LODnu8Lc')]),
+}
 # jedna nahrávka se dvěma písničkami za sebou → přiřadí se oběma
-VICE_PISNI = {'atvladnezenstvozitrauzlidistejnenebudou': ['Ať vládnou ženy', 'Zítra už lidi nebudou']}
+VICE_PISNI = {'atvladnezenstvozitrauzlidistejnenebudou': ['Ať vládnou ženy', 'Lachtan']}
 def pisne_souboru(nazev): n = nazev_pisne(nazev); return VICE_PISNI.get(bez_hacku(n), [n])
 def klic_pisne(n): return bez_hacku(VARIANTY.get(bez_hacku(n), n))
 katalog = {}
@@ -266,7 +271,8 @@ for z in katalog.values():
     katalog_web.append(dict(p=z['p'], n=z['n'], prvne=hr and koncert_kratce(hr[0]), naposled=hr and koncert_kratce(hr[-1]),
         zk=zk and DRIVE_F.format(zk['ID']), zk_t=zk and zk['Name'], zk_n=len(z['zk']),
         st=st and DRIVE_F.format(st['ID']), st_t=st and st['Path'], st_rok=st and st['Path'].split('/')[0][:4],
-        text=z['text'], koncept=z['koncept'], klip=z['klip'], zaznam=posl[0], zaznam_co=posl[1]))
+        text=z['text'], koncept=z['koncept'], klip=z['klip'], zaznam=posl[0], zaznam_co=posl[1],
+        pozn=PISNE_EXTRA.get(z['p'], {}).get('pozn'), verejne=[dict(t=t, url=u) for t, u in PISNE_EXTRA.get(z['p'], {}).get('odkazy', [])]))
 katalog_web.sort(key=lambda x: (-x['n'], bez_hacku(x['p'])))  # pro žebříček; stránka si řadí sama podle posledního záznamu
 pisne = [x for x in katalog_web if x['n']]
 

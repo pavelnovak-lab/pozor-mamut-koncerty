@@ -31,7 +31,7 @@ __STYLE__
     <p class="sub">Z playlistů, nahrávek ze zkušebny a ze studia a z textů na kapelním Disku. Nahoře písničky s nejnovější nahrávkou nebo textem.</p>
     <div class="filters" id="filtry" role="group" aria-label="Které písničky"></div>
     <div class="tbl"><table class="ptbl"><thead><tr><th>Písnička</th><th>Poslední záznam</th><th>Naživo</th><th>Nahrávky a text</th></tr></thead><tbody id="tb"></tbody></table></div>
-    <p class="legend">* Nahrávky, texty a videoklip jsou na kapelním Google Disku, otevřou se jen členům kapely. „Zkušebna“ a „studio“ vedou na nejnovější nahrávku. „Text“ je opravený text, „koncept“ strojový přepis z nahrávky k opravě.</p>
+    <p class="legend">* Nahrávky, texty a videoklip jsou na kapelním Google Disku, otevřou se jen členům kapely. „Zkušebna“ a „studio“ vedou na nejnovější nahrávku. „Text“ je opravený text, „koncept“ strojový přepis z nahrávky k opravě. Odkazy s ▶ jsou veřejné.</p>
   </section>
 
   <section id="pisne">
@@ -56,7 +56,7 @@ const hrane = P.filter(p => p.n), st = P.filter(p => p.st), zk = P.filter(p => p
 $('#lede').textContent = `Známe ${P.length} ${plural(P.length,'písničku','písničky','písniček')}. ${hrane.length} z nich ${plural(hrane.length,'je','jsou','je')} na dochovaných playlistech, ${st.length} ${plural(st.length,'má','mají','má')} studiovou nahrávku a ${zk.length} nahrávku ze zkušebny.`;
 
 const a = (u, t, tit) => u ? `<a href="${u}" target="_blank" rel="noopener" title="${esc(tit)}">${t}<span class="lock">*</span></a>` : '';
-const odkazy = p => `<span class="nahr">${a(p.zk, 'zkušebna', 'Nahrávka ze zkušebny: ' + (p.zk_t || '') + (p.zk_n > 1 ? ` (nahrávek: ${p.zk_n})` : ''))}${a(p.st, 'studio' + (p.st_rok ? ' ' + p.st_rok : ''), 'Studiová nahrávka: ' + (p.st_t || ''))}${a(p.text, 'text', 'Text písničky')}${p.text ? '' : a(p.koncept, 'koncept textu', 'Strojový přepis textu k opravě')}${a(p.klip, 'videoklip', 'Videoklip')}</span>`;
+const odkazy = p => `<span class="nahr">${a(p.zk, 'zkušebna', 'Nahrávka ze zkušebny: ' + (p.zk_t || '') + (p.zk_n > 1 ? ` (nahrávek: ${p.zk_n})` : ''))}${a(p.st, 'studio' + (p.st_rok ? ' ' + p.st_rok : ''), 'Studiová nahrávka: ' + (p.st_t || ''))}${a(p.text, 'text', 'Text písničky')}${p.text ? '' : a(p.koncept, 'koncept textu', 'Strojový přepis textu k opravě')}${a(p.klip, 'videoklip', 'Videoklip')}${(p.verejne || []).map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener" title="Veřejný záznam">▶ ${esc(l.t)}</a>`).join('')}</span>`;
 
 // nejhranější
 const mx = hrane.length ? hrane[0].n : 1;
@@ -71,7 +71,7 @@ const FILTRY = [['vše', () => true], ['hrajeme naživo', p => p.n], ['se studio
 let sel = 0;
 const draw = () => {
   $('#filtry').innerHTML = FILTRY.map((f, i) => `<button type="button" aria-pressed="${i === sel}" data-i="${i}">${f[0]}</button>`).join('');
-  $('#tb').innerHTML = PODLE_ZAZNAMU.filter(FILTRY[sel][1]).map(p => `<tr class="${p.n ? '' : 'nehrano'}"><td class="p">${esc(p.p)}</td>`
+  $('#tb').innerHTML = PODLE_ZAZNAMU.filter(FILTRY[sel][1]).map(p => `<tr class="${p.n ? '' : 'nehrano'}"><td class="p">${esc(p.p)}${p.pozn ? `<span class="sest">${esc(p.pozn)}</span>` : ''}</td>`
     + `<td class="h">${p.zaznam ? datum(p.zaznam) + `<small>${p.zaznam_co}</small>` : '–'}</td>`
     + `<td class="h">${p.n ? p.n + '×' + `<small>${p.prvne === p.naposled ? esc(p.naposled) : 'naposled ' + esc(p.naposled)}</small>` : '–'}</td>`
     + `<td>${odkazy(p)}</td></tr>`).join('');
