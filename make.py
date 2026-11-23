@@ -188,9 +188,10 @@ for d, m in mat.items():
 # --- nahrávky písniček: nejnovější ze zkušebny a ze studia (jen pro kapelu, odkazy na Disk) ---
 # Zkušebna: Písničky/Zkušebna/RRRR/RRRR-MM-DD Název písničky[ N].ext
 # Studio:   Písničky/Studio a desky/RRRR[-MM] Název nahrávání/…/[NN-]Název písničky[ - studio RR - mix N].ext
-# Název souboru (bez data a čísla stopy) musí začínat názvem písničky; varianty názvů v NAZVY_PISNI.
+# Název souboru bez data a čísla stopy = název písničky; varianty názvů ve VARIANTY.
+def fmt(d):
+    return d.strftime('%-d. %-m. %Y') if isinstance(d, dt.date) else str(d)
 def bez_hacku(t): return re.sub(r'[^a-z0-9]', '', __import__('unicodedata').normalize('NFKD', t).encode('ascii', 'ignore').decode().lower())
-NAZVY_PISNI = {'Jaro (Sněženky u popelnic)': ['Jaro', 'Sněženky u popelnic'], 'Titáni': ['Titáni v Tartaru']}
 AUDIO = re.compile(r'\.(mp3|wav|m4a|aac|flac|ogg|opus)$', re.I)
 def kmen(nazev):  # „2024-02-10_Jihlavská Ganga.aac“ → „jihlavskaganga“
     n = AUDIO.sub('', nazev); n = re.sub(r'^\d{4}(-\d{2}){0,2}[ _]*', '', n); n = re.sub(r'^\d{1,2}\s*-\s*', '', n)
@@ -202,20 +203,59 @@ nahravky_zk = [f for f in lsjson('Písničky/Zkušebna') if not f['IsDir'] and A
                and DATUM.match(f['Name'][:7] + '-01') and not re.search(r'K určení|Celá zkouška', f['Path'])]
 nahravky_st = [f for f in lsjson('Písničky/Studio a desky') if not f['IsDir'] and AUDIO.search(f['Name'])
                and not re.search(r'STOPY|mixdown', f['Path'], re.I)]
-def nahravka(pisen, soubory, klic):
-    jmena = [bez_hacku(x) for x in [pisen, re.sub(r'\s*\(.*\)', '', pisen)] + NAZVY_PISNI.get(pisen, [])]
-    kand = [f for f in soubory if any(kmen(f['Name']).startswith(j) and len(j) >= 4 for j in jmena)]
-    # „Mamut“ nesmí chytit „Mamutí …“: za názvem už nesmí pokračovat písmeno, leda verze
-    kand = [f for f in kand if any(re.fullmatch(re.escape(j) + r'(\d*(studio|mix|verze|vyhravky).*|\d+)?', kmen(f['Name'])) for j in jmena)]
-    if not kand: return None
-    f = max(kand, key=klic); return dict(url=DRIVE_F.format(f['ID']), src=f['Path'])
 zk_klic = lambda f: (f['Name'][:10], verze(f['Name']))
 # novější nahrávání; finální stopy (přímo ve složce nahrávání nebo v WAV/MP3) před pracovními mixy v jiných podsložkách
 st_klic = lambda f: (f['Path'].split('/')[0][:7], len(f['Path'].split('/')) == 2 or f['Path'].split('/')[1] in ('WAV', 'MP3'), verze(f['Name']), f['Name'].lower().endswith('.mp3'))
-def odkazy_pisne(p):
-    z, st = nahravka(p, nahravky_zk, zk_klic), nahravka(p, nahravky_st, st_klic)
-    return dict(zk=z and z['url'], zk_t=z and z['src'].split('/')[-1], st=st and st['url'], st_t=st and st['src'])
-pisne = [dict(p=p, n=n, **odkazy_pisne(p)) for p, n in sl.most_common()]
+
+# --- katalog písniček: playlisty + nahrávky ze zkušebny a ze studia + texty + videoklipy ---
+# Název písničky z názvu souboru: bez data, čísla stopy, verze, mixu, závorek a „[přepis whisper]“.
+# Různé názvy téže písničky sjednotí VARIANTY (klíč = název bez háčků a mezer).
+VARIANTY = {'jaro': 'Jaro (Sněženky u popelnic)', 'snezenkyupopelnic': 'Jaro (Sněženky u popelnic)',
+            'titanivtartaru': 'Titáni', 'gember': 'Gambler', 'spravnejcas': 'Je správnej čas',
+            'atvladnezenstvozitrauzlidistejnenebudou': 'Ať vládnou ženy', 'blinky': 'Blinky 182'}
+MESICE = 'leden|únor|březen|duben|květen|červen|červenec|srpen|září|říjen|listopad|prosinec'
+def nazev_pisne(nazev):
+    n = re.sub(r'\.[A-Za-z0-9]{2,5}$', '', nazev).replace('_', ' ')
+    n = re.sub(r'^\d{4}(-\d{2}){0,2}\s*', '', n); n = re.sub(r'^\d{1,2}\s*-\s*', '', n)
+    n = re.sub(r'^\[[^]]*\]\s*|^Pozor mamut\s*-\s*', '', n, flags=re.I)
+    n = re.sub(r'\s+[–-]\s+videoklip.*$', '', n, flags=re.I)
+    n = re.sub(r'\s*\(.*?\)', '', n); n = re.sub(r'\s+-\s+studio.*$|\s+mix\s*\d+$|\s+\d+\.?\s*(mix|verze)$', '', n, flags=re.I)
+    n = re.sub(rf'\s+({MESICE})\s+\d{{4}}$', '', n, flags=re.I); n = re.sub(r'\s+\d+$', '', n).strip(' -')
+    return n[:1].upper() + n[1:]
+def klic_pisne(n): return bez_hacku(VARIANTY.get(bez_hacku(n), n))
+katalog = {}
+def pisen(n, priorita):  # vrátí záznam; jméno s diakritikou a z lepšího zdroje (playlist > text > nahrávka) vyhrává
+    k = klic_pisne(n); jm = VARIANTY.get(bez_hacku(n), n)
+    z = katalog.setdefault(k, dict(p=jm, pr=priorita, n=0, hrano=[], zk=[], st=[], text=None, koncept=None, klip=None))
+    lepsi = (priorita, jm != jm.encode('ascii', 'ignore').decode()) > (z['pr'], z['p'] != z['p'].encode('ascii', 'ignore').decode())
+    if lepsi: z['p'], z['pr'] = jm, priorita
+    return z
+po_koncertech = {str(r['d']): r for r in kon}
+for d, m in mat.items():
+    for s_ in m['pisne']:
+        z = pisen(s_, 3); z['n'] += 1; z['hrano'].append(d)
+for f in nahravky_zk: pisen(nazev_pisne(f['Name']), 1)['zk'].append(f)
+for f in nahravky_st: pisen(nazev_pisne(f['Name']), 0)['st'].append(f)
+for f in lsjson('Písničky/Texty'):
+    if f['IsDir']: continue
+    z = pisen(nazev_pisne(f['Name']), 2)
+    url = 'https://docs.google.com/document/d/{}/edit'.format(f['ID'])
+    if 'Koncept' in f['Path']: z['koncept'] = url
+    elif not z['text'] or f['Name'][:4].isdigit(): z['text'] = url  # datovaná verze je novější
+for f in lsjson('Písničky/Videoklipy'):
+    if not f['IsDir'] and VID.search(f['Name']) and '/' not in f['Path']: pisen(nazev_pisne(f['Name']), 1)['klip'] = DRIVE_F.format(f['ID'])
+def koncert_kratce(d):
+    r = po_koncertech.get(d); return f"{fmt(r['d'])} {cisti_mesto(r['mesto'])}" if r else d
+katalog_web = []
+for z in katalog.values():
+    zk = max(z['zk'], key=zk_klic) if z['zk'] else None; st = max(z['st'], key=st_klic) if z['st'] else None
+    hr = sorted(z['hrano'])
+    katalog_web.append(dict(p=z['p'], n=z['n'], prvne=hr and koncert_kratce(hr[0]), naposled=hr and koncert_kratce(hr[-1]),
+        zk=zk and DRIVE_F.format(zk['ID']), zk_t=zk and zk['Name'], zk_n=len(z['zk']),
+        st=st and DRIVE_F.format(st['ID']), st_t=st and st['Path'], st_rok=st and st['Path'].split('/')[0][:4],
+        text=z['text'], koncept=z['koncept'], klip=z['klip']))
+katalog_web.sort(key=lambda x: (-x['n'], bez_hacku(x['p'])))
+pisne = [x for x in katalog_web if x['n']]
 
 # --- cesty: jen souhrny ---
 cesty = dict(km=None)
@@ -258,8 +298,6 @@ def sestava_web(t):
     t = t.replace('bez Zdeňka J. (sax)', 'nehrál Zdeněk J. (saxofon)').replace('(basa Vóďa)', '').replace('bez saxofonu (Zdeněk J.)', 'nehrál Zdeněk J. (saxofon)')
     t = t.strip()
     return t[:1].upper() + t[1:] if t else ''
-def fmt(d):
-    return d.strftime('%-d. %-m. %Y') if isinstance(d, dt.date) else str(d)
 from PIL import Image
 def dhash(cesta):
     g = Image.open(TU + '/' + cesta).convert('L').resize((9, 8)); px = list(g.getdata())
@@ -309,15 +347,21 @@ DATA = dict(sestava=SESTAVA, prvni=dict(akce=re.split(r' – ', prvni['akce'])[0
 
 obrys = json.load(open(TU + '/data/cz_obrys.json'))
 logo = open(LOGO, encoding='utf-8').read()
-html = open(TU + '/template.html', encoding='utf-8').read()
-html = html.replace('__DATA__', json.dumps(DATA, ensure_ascii=False)).replace('__OBRYS__', json.dumps(obrys)).replace('__LOGO__', logo)
+ikona = '<link rel="icon" href="data:image/webp;base64,' + base64.b64encode(open(TU + '/data/logo.webp', 'rb').read()).decode() + '">\n'
+def stranka(sablona, data):
+    html = open(TU + '/' + sablona, encoding='utf-8').read()
+    html = html.replace('__STYLE__', styl).replace('__DATA__', json.dumps(data, ensure_ascii=False)).replace('__OBRYS__', json.dumps(obrys)).replace('__LOGO__', logo)
+    hlava, telo = html.split('<header', 1)
+    return html, ('<!doctype html>\n<html lang="cs">\n<head>\n<meta charset="utf-8">\n'
+                  '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
+                  + ikona + hlava + '</head>\n<body>\n<header' + telo + '\n</body>\n</html>\n')
+styl = re.search(r'<style>(.*?)</style>', open(TU + '/template.html', encoding='utf-8').read(), re.S).group(1)
+html, cela = stranka('template.html', DATA)
 open(TU + '/nahled.html', 'w', encoding='utf-8').write(html)  # fragment pro náhled v Artifactu
-hlava, telo = html.split('<header', 1)
-open(TU + '/index.html', 'w', encoding='utf-8').write(
-    '<!doctype html>\n<html lang="cs">\n<head>\n<meta charset="utf-8">\n'
-    '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
-    '<link rel="icon" href="data:image/webp;base64,' + base64.b64encode(open(TU + '/data/logo.webp', 'rb').read()).decode() + '">\n' + hlava + '</head>\n<body>\n<header' + telo + '\n</body>\n</html>\n')
-print(f'index.html: {len(kon)} koncertů, {len(mista)} míst, {len(kap)} kapel, km {cesty.get("km")}')
+open(TU + '/index.html', 'w', encoding='utf-8').write(cela)
+open(TU + '/pisnicky.html', 'w', encoding='utf-8').write(stranka('template-pisnicky.html', dict(
+    katalog=katalog_web, playlistu=len(sl_koncerty), aktualizace=DATA['aktualizace']))[1])
+print(f'index.html: {len(kon)} koncertů, {len(mista)} míst, {len(kap)} kapel, km {cesty.get("km")}; pisnicky.html: {len(katalog_web)} písniček')
 bez_koncertu = sorted({m['zdroj'][k] for d, m in mat.items() for k in ('fotky', 'videa')
                        if m['zdroj'].get(k) and d not in {str(r['d']) for r in kon}
                        and not re.search(r'zkušebn|nahrávání|studio', m['zdroj'][k], re.I)})

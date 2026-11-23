@@ -120,7 +120,7 @@ a{color:var(--accent)}
   <div class="wrap">
     __LOGO__
     <div class="hero">
-      <p class="eyebrow">Pozor Mamut · punk Jihlava · koncerty od roku <span id="od"></span></p>
+      <p class="eyebrow">Pozor Mamut · punk Jihlava · koncerty od roku <span id="od"></span> · <a href="pisnicky.html" style="color:inherit">písničky</a></p>
       <h1>Mamut naživo</h1>
       <p class="lede" id="lede"></p>
     </div>
@@ -171,10 +171,9 @@ a{color:var(--accent)}
     <div class="records" id="records"></div>
   </section>
 
-  <section id="pisne" hidden>
+  <section id="pisne">
     <h2>Co hrajeme</h2>
-    <p class="sub" id="pisne-sub"></p>
-    <div class="hbars" id="pisne-list"></div>
+    <p class="sub">Nejhranější písničky, nahrávky ze zkušebny a ze studia a texty jsou na samostatné stránce: <a href="pisnicky.html">Písničky →</a></p>
   </section>
 
   <section id="sestava">
@@ -339,14 +338,6 @@ function nahr(jm) {
   const a = (u, t, tit) => u ? `<a href="${u}" target="_blank" rel="noopener" title="${tit}">${t}<span class="lock">*</span></a>` : '';
   return `<span class="nahr">${a(p.zk, 'zkušebna', 'Nahrávka ze zkušebny: ' + (p.zk_t || ''))}${a(p.st, 'studio', 'Studiová nahrávka: ' + (p.st_t || ''))}</span>`;
 }
-(function () {
-  const P = D.pisne; if (!P.length) return;
-  $('#pisne').hidden = false;
-  $('#pisne-sub').textContent = `Z ${D.playlistu} ${plural(D.playlistu,'dochovaného playlistu','dochovaných playlistů','dochovaných playlistů')}. Každý další dochovaný papír s playlistem pomůže.`;
-  const mx = P[0].n;
-  $('#pisne-list').innerHTML = P.slice(0, 16).map(p => `<div class="hb"><span class="k">${p.p}</span><span class="t"><i style="width:${p.n / mx * 100}%"></i></span><span class="n">${p.n}</span>${nahr(p.p)}</div>`).join('');
-  if (P.some(p => p.zk || p.st)) $('#pisne-sub').textContent += ' Odkazy „zkušebna“ a „studio“ vedou na nejnovější nahrávku na kapelním Disku (*jen pro kapelu).';
-})();
 
 // --- sestava ---
 (function () {

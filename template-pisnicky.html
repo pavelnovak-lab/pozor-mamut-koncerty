@@ -1,0 +1,76 @@
+<title>Mamut – písničky</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@400;500&family=Work+Sans:wght@400;500;600&display=swap">
+<style>
+__STYLE__
+/* jen stránka s písničkami */
+.ptbl td.p{font-weight:600;min-width:9em}
+.ptbl td.h{font:13px var(--f-mono);white-space:nowrap}
+.ptbl td.h small{display:block;color:var(--muted);font:12px var(--f-body);white-space:normal}
+.ptbl td .nahr{display:flex}
+.ptbl tr.nehrano td.p{font-weight:500;color:var(--muted)}
+.souhrn{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 18px}
+</style>
+
+<header class="band">
+  <div class="wrap">
+    __LOGO__
+    <div class="hero">
+      <p class="eyebrow">Pozor Mamut · punk Jihlava · <a href="index.html" style="color:inherit">koncerty</a> · písničky</p>
+      <h1>Písničky</h1>
+      <p class="lede" id="lede"></p>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section id="pisne">
+    <h2>Co hrajeme nejčastěji</h2>
+    <p class="sub" id="pisne-sub"></p>
+    <div class="hbars" id="pisne-list"></div>
+  </section>
+
+  <section id="vse">
+    <h2>Všechny písničky</h2>
+    <p class="sub">Z playlistů, nahrávek ze zkušebny a ze studia a z textů na kapelním Disku. Nahoře ty, které hrajeme naživo.</p>
+    <div class="filters" id="filtry" role="group" aria-label="Které písničky"></div>
+    <div class="tbl"><table class="ptbl"><thead><tr><th>Písnička</th><th>Naživo</th><th>Nahrávky a text</th></tr></thead><tbody id="tb"></tbody></table></div>
+    <p class="legend">* Nahrávky, texty a videoklip jsou na kapelním Google Disku, otevřou se jen členům kapely. „Zkušebna“ a „studio“ vedou na nejnovější nahrávku. „Text“ je opravený text, „koncept“ strojový přepis z nahrávky k opravě.</p>
+  </section>
+</main>
+<footer><div class="wrap">
+  Sestaveno z dochovaných playlistů a kapelního Disku. Aktualizováno <span id="akt"></span>.
+  <a href="index.html">Statistiky koncertů</a> · Web kapely: <a href="https://pozormamut.cz/" target="_blank" rel="noopener">pozormamut.cz</a>.
+</div></footer>
+
+<script>
+const D = __DATA__;
+const $ = s => document.querySelector(s);
+const plural = (n, a, b, c) => n === 1 ? a : (n >= 2 && n <= 4 ? b : c);
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const P = D.katalog;
+$('#akt').textContent = D.aktualizace;
+const hrane = P.filter(p => p.n), st = P.filter(p => p.st), zk = P.filter(p => p.zk);
+$('#lede').textContent = `Známe ${P.length} ${plural(P.length,'písničku','písničky','písniček')}. ${hrane.length} z nich ${plural(hrane.length,'je','jsou','je')} na dochovaných playlistech, ${st.length} ${plural(st.length,'má','mají','má')} studiovou nahrávku a ${zk.length} nahrávku ze zkušebny.`;
+
+const a = (u, t, tit) => u ? `<a href="${u}" target="_blank" rel="noopener" title="${esc(tit)}">${t}<span class="lock">*</span></a>` : '';
+const odkazy = p => `<span class="nahr">${a(p.zk, 'zkušebna', 'Nahrávka ze zkušebny: ' + (p.zk_t || '') + (p.zk_n > 1 ? ` (nahrávek: ${p.zk_n})` : ''))}${a(p.st, 'studio' + (p.st_rok ? ' ' + p.st_rok : ''), 'Studiová nahrávka: ' + (p.st_t || ''))}${a(p.text, 'text', 'Text písničky')}${p.text ? '' : a(p.koncept, 'koncept textu', 'Strojový přepis textu k opravě')}${a(p.klip, 'videoklip', 'Videoklip')}</span>`;
+
+// nejhranější
+const mx = hrane.length ? hrane[0].n : 1;
+$('#pisne-sub').textContent = `Z ${D.playlistu} ${plural(D.playlistu,'dochovaného playlistu','dochovaných playlistů','dochovaných playlistů')}. Každý další dochovaný papír s playlistem pomůže.`;
+$('#pisne-list').innerHTML = hrane.slice(0, 16).map(p => `<div class="hb"><span class="k">${esc(p.p)}</span><span class="t"><i style="width:${p.n / mx * 100}%"></i></span><span class="n">${p.n}</span>${odkazy({ zk: p.zk, zk_t: p.zk_t, st: p.st, st_t: p.st_t })}</div>`).join('');
+
+// tabulka
+const FILTRY = [['vše', () => true], ['hrajeme naživo', p => p.n], ['se studiovou nahrávkou', p => p.st], ['bez nahrávky', p => !p.st && !p.zk]];
+let sel = 0;
+const draw = () => {
+  $('#filtry').innerHTML = FILTRY.map((f, i) => `<button type="button" aria-pressed="${i === sel}" data-i="${i}">${f[0]}</button>`).join('');
+  $('#tb').innerHTML = P.filter(FILTRY[sel][1]).map(p => `<tr class="${p.n ? '' : 'nehrano'}"><td class="p">${esc(p.p)}</td>`
+    + `<td class="h">${p.n ? p.n + '×' + `<small>${p.prvne === p.naposled ? esc(p.naposled) : 'naposled ' + esc(p.naposled)}</small>` : '–'}</td>`
+    + `<td>${odkazy(p)}</td></tr>`).join('');
+};
+$('#filtry').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; sel = +b.dataset.i; draw(); });
+draw();
+</script>
