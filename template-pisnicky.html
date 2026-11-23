@@ -33,9 +33,9 @@ __STYLE__
 
   <section id="vse">
     <h2>Všechny písničky</h2>
-    <p class="sub">Z playlistů, nahrávek ze zkušebny a ze studia a z textů na kapelním Disku. Nahoře ty, které hrajeme naživo.</p>
+    <p class="sub">Z playlistů, nahrávek ze zkušebny a ze studia a z textů na kapelním Disku. Nahoře písničky s nejnovější nahrávkou nebo textem.</p>
     <div class="filters" id="filtry" role="group" aria-label="Které písničky"></div>
-    <div class="tbl"><table class="ptbl"><thead><tr><th>Písnička</th><th>Naživo</th><th>Nahrávky a text</th></tr></thead><tbody id="tb"></tbody></table></div>
+    <div class="tbl"><table class="ptbl"><thead><tr><th>Písnička</th><th>Poslední záznam</th><th>Naživo</th><th>Nahrávky a text</th></tr></thead><tbody id="tb"></tbody></table></div>
     <p class="legend">* Nahrávky, texty a videoklip jsou na kapelním Google Disku, otevřou se jen členům kapely. „Zkušebna“ a „studio“ vedou na nejnovější nahrávku. „Text“ je opravený text, „koncept“ strojový přepis z nahrávky k opravě.</p>
   </section>
 </main>
@@ -62,12 +62,16 @@ const mx = hrane.length ? hrane[0].n : 1;
 $('#pisne-sub').textContent = `Z ${D.playlistu} ${plural(D.playlistu,'dochovaného playlistu','dochovaných playlistů','dochovaných playlistů')}. Každý další dochovaný papír s playlistem pomůže.`;
 $('#pisne-list').innerHTML = hrane.slice(0, 16).map(p => `<div class="hb"><span class="k">${esc(p.p)}</span><span class="t"><i style="width:${p.n / mx * 100}%"></i></span><span class="n">${p.n}</span>${odkazy({ zk: p.zk, zk_t: p.zk_t, st: p.st, st_t: p.st_t })}</div>`).join('');
 
-// tabulka
+// tabulka: podle posledního záznamu (nahrávka nebo text), bez záznamu na konec podle hraní naživo
+const PODLE_ZAZNAMU = [...P].sort((x, y) => (y.zaznam || '').localeCompare(x.zaznam || '') || y.n - x.n || x.p.localeCompare(y.p, 'cs'));
+const MES = ['leden','únor','březen','duben','květen','červen','červenec','srpen','září','říjen','listopad','prosinec'];
+const datum = s => { const [r, m, d] = s.split('-'); return d ? `${+d}. ${+m}. ${r}` : m ? `${MES[+m - 1]} ${r}` : r; };
 const FILTRY = [['vše', () => true], ['hrajeme naživo', p => p.n], ['se studiovou nahrávkou', p => p.st], ['bez nahrávky', p => !p.st && !p.zk]];
 let sel = 0;
 const draw = () => {
   $('#filtry').innerHTML = FILTRY.map((f, i) => `<button type="button" aria-pressed="${i === sel}" data-i="${i}">${f[0]}</button>`).join('');
-  $('#tb').innerHTML = P.filter(FILTRY[sel][1]).map(p => `<tr class="${p.n ? '' : 'nehrano'}"><td class="p">${esc(p.p)}</td>`
+  $('#tb').innerHTML = PODLE_ZAZNAMU.filter(FILTRY[sel][1]).map(p => `<tr class="${p.n ? '' : 'nehrano'}"><td class="p">${esc(p.p)}</td>`
+    + `<td class="h">${p.zaznam ? datum(p.zaznam) + `<small>${p.zaznam_co}</small>` : '–'}</td>`
     + `<td class="h">${p.n ? p.n + '×' + `<small>${p.prvne === p.naposled ? esc(p.naposled) : 'naposled ' + esc(p.naposled)}</small>` : '–'}</td>`
     + `<td>${odkazy(p)}</td></tr>`).join('');
 };

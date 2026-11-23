@@ -101,8 +101,8 @@ po_dnech = [dict(d=DNY[i], n=dny.get(i, 0)) for i in range(7)]
 
 # --- materiály na Disku: plakáty, playlisty, fotky, videa (párují se podle data RRRR-MM-DD v názvu) ---
 ROOT = 'gdrive,root_folder_id=1Ns75usanWOJoy2fHk7KD8EFYv58sNub_:'
-def lsjson(cesta):
-    out = subprocess.run(['rclone', 'lsjson', '-R', '--no-modtime', ROOT + cesta], check=True, capture_output=True, text=True).stdout
+def lsjson(cesta, cas=False):
+    out = subprocess.run(['rclone', 'lsjson', '-R'] + ([] if cas else ['--no-modtime']) + [ROOT + cesta], check=True, capture_output=True, text=True).stdout
     return json.loads(out)
 DATUM = re.compile(r'(\d{4}-\d{2}-\d{2})')
 OBR = re.compile(r'\.(jpe?g|png|webp|heic|pdf|gif)$', re.I); VID = re.compile(r'\.(mp4|mov|avi|mkv|m4v)$', re.I)
@@ -226,7 +226,7 @@ def klic_pisne(n): return bez_hacku(VARIANTY.get(bez_hacku(n), n))
 katalog = {}
 def pisen(n, priorita):  # vrátí záznam; jméno s diakritikou a z lepšího zdroje (playlist > text > nahrávka) vyhrává
     k = klic_pisne(n); jm = VARIANTY.get(bez_hacku(n), n)
-    z = katalog.setdefault(k, dict(p=jm, pr=priorita, n=0, hrano=[], zk=[], st=[], text=None, koncept=None, klip=None))
+    z = katalog.setdefault(k, dict(p=jm, pr=priorita, n=0, hrano=[], zk=[], st=[], text=None, koncept=None, klip=None, text_d=''))
     lepsi = (priorita, jm != jm.encode('ascii', 'ignore').decode()) > (z['pr'], z['p'] != z['p'].encode('ascii', 'ignore').decode())
     if lepsi: z['p'], z['pr'] = jm, priorita
     return z
@@ -236,12 +236,15 @@ for d, m in mat.items():
         z = pisen(s_, 3); z['n'] += 1; z['hrano'].append(d)
 for f in nahravky_zk: pisen(nazev_pisne(f['Name']), 1)['zk'].append(f)
 for f in nahravky_st: pisen(nazev_pisne(f['Name']), 0)['st'].append(f)
-for f in lsjson('Písničky/Texty'):
+for f in lsjson('Písničky/Texty', cas=True):
     if f['IsDir']: continue
     z = pisen(nazev_pisne(f['Name']), 2)
     url = 'https://docs.google.com/document/d/{}/edit'.format(f['ID'])
     if 'Koncept' in f['Path']: z['koncept'] = url
-    elif not z['text'] or f['Name'][:4].isdigit(): z['text'] = url  # datovaná verze je novější
+    else:
+        if not z['text'] or f['Name'][:4].isdigit(): z['text'] = url  # datovaná verze je novější
+        # datum textu: z názvu, jinak poslední úprava dokumentu
+        z['text_d'] = max(z['text_d'], DATUM.match(f['Name']).group(1) if DATUM.match(f['Name']) else f['ModTime'][:10])
 for f in lsjson('Písničky/Videoklipy'):
     if not f['IsDir'] and VID.search(f['Name']) and '/' not in f['Path']: pisen(nazev_pisne(f['Name']), 1)['klip'] = DRIVE_F.format(f['ID'])
 def koncert_kratce(d):
@@ -250,11 +253,16 @@ katalog_web = []
 for z in katalog.values():
     zk = max(z['zk'], key=zk_klic) if z['zk'] else None; st = max(z['st'], key=st_klic) if z['st'] else None
     hr = sorted(z['hrano'])
+    # poslední záznam: nahrávka ze zkušebny (datum v názvu), studio (měsíc nahrávání), text; koncepty z přepisu se nepočítají
+    dat = lambda t: re.match(r'\d{4}(-\d{2}){0,2}', t).group(0)
+    zaznamy = [(dat(f['Name']), 'zkušebna') for f in z['zk']] + [(dat(f['Path']), 'studio') for f in z['st']] \
+              + ([(z['text_d'], 'text')] if z['text_d'] else [])
+    posl = max(zaznamy, default=('', ''))
     katalog_web.append(dict(p=z['p'], n=z['n'], prvne=hr and koncert_kratce(hr[0]), naposled=hr and koncert_kratce(hr[-1]),
         zk=zk and DRIVE_F.format(zk['ID']), zk_t=zk and zk['Name'], zk_n=len(z['zk']),
         st=st and DRIVE_F.format(st['ID']), st_t=st and st['Path'], st_rok=st and st['Path'].split('/')[0][:4],
-        text=z['text'], koncept=z['koncept'], klip=z['klip']))
-katalog_web.sort(key=lambda x: (-x['n'], bez_hacku(x['p'])))
+        text=z['text'], koncept=z['koncept'], klip=z['klip'], zaznam=posl[0], zaznam_co=posl[1]))
+katalog_web.sort(key=lambda x: (-x['n'], bez_hacku(x['p'])))  # pro žebříček; stránka si řadí sama podle posledního záznamu
 pisne = [x for x in katalog_web if x['n']]
 
 # --- cesty: jen souhrny ---
