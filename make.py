@@ -212,7 +212,7 @@ st_klic = lambda f: (f['Path'].split('/')[0][:7], len(f['Path'].split('/')) == 2
 # Různé názvy téže písničky sjednotí VARIANTY (klíč = název bez háčků a mezer).
 VARIANTY = {'jaro': 'Jaro (Sněženky u popelnic)', 'snezenkyupopelnic': 'Jaro (Sněženky u popelnic)',
             'titanivtartaru': 'Titáni', 'gember': 'Gambler', 'spravnejcas': 'Je správnej čas',
-            'atvladnezenstvozitrauzlidistejnenebudou': 'Ať vládnou ženy', 'blinky': 'Blinky 182'}
+            'blinky': 'Blinky 182'}
 MESICE = 'leden|únor|březen|duben|květen|červen|červenec|srpen|září|říjen|listopad|prosinec'
 def nazev_pisne(nazev):
     n = re.sub(r'\.[A-Za-z0-9]{2,5}$', '', nazev).replace('_', ' ')
@@ -222,6 +222,9 @@ def nazev_pisne(nazev):
     n = re.sub(r'\s*\(.*?\)', '', n); n = re.sub(r'\s+-\s+studio.*$|\s+mix\s*\d+$|\s+\d+\.?\s*(mix|verze)$', '', n, flags=re.I)
     n = re.sub(rf'\s+({MESICE})\s+\d{{4}}$', '', n, flags=re.I); n = re.sub(r'\s+\d+$', '', n).strip(' -')
     return n[:1].upper() + n[1:]
+# jedna nahrávka se dvěma písničkami za sebou → přiřadí se oběma
+VICE_PISNI = {'atvladnezenstvozitrauzlidistejnenebudou': ['Ať vládnou ženy', 'Zítra už lidi nebudou']}
+def pisne_souboru(nazev): n = nazev_pisne(nazev); return VICE_PISNI.get(bez_hacku(n), [n])
 def klic_pisne(n): return bez_hacku(VARIANTY.get(bez_hacku(n), n))
 katalog = {}
 def pisen(n, priorita):  # vrátí záznam; jméno s diakritikou a z lepšího zdroje (playlist > text > nahrávka) vyhrává
@@ -234,8 +237,10 @@ po_koncertech = {str(r['d']): r for r in kon}
 for d, m in mat.items():
     for s_ in m['pisne']:
         z = pisen(s_, 3); z['n'] += 1; z['hrano'].append(d)
-for f in nahravky_zk: pisen(nazev_pisne(f['Name']), 1)['zk'].append(f)
-for f in nahravky_st: pisen(nazev_pisne(f['Name']), 0)['st'].append(f)
+for f in nahravky_zk:
+    for n in pisne_souboru(f['Name']): pisen(n, 1)['zk'].append(f)
+for f in nahravky_st:
+    for n in pisne_souboru(f['Name']): pisen(n, 0)['st'].append(f)
 for f in lsjson('Písničky/Texty', cas=True):
     if f['IsDir']: continue
     z = pisen(nazev_pisne(f['Name']), 2)
