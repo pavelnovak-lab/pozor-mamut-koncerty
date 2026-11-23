@@ -212,7 +212,7 @@ st_klic = lambda f: (f['Path'].split('/')[0][:7], len(f['Path'].split('/')) == 2
 # Různé názvy téže písničky sjednotí VARIANTY (klíč = název bez háčků a mezer).
 VARIANTY = {'jaro': 'Jaro (Sněženky u popelnic)', 'snezenkyupopelnic': 'Jaro (Sněženky u popelnic)',
             'titanivtartaru': 'Titáni', 'gember': 'Gambler', 'spravnejcas': 'Je správnej čas',
-            'blinky': 'Blinky 182', 'reggae': 'Sláva sláva slunci', 'houby': 'Otrávená', 'zitrauzlidinebudou': 'Lachtan'}
+            'blinky': 'Blinky 182', 'reggae': 'Sláva sláva slunci', 'houby': 'Otrávená', 'zitrauzlidinebudou': 'Lachtan', 'jeronimo': 'Geronimo'}
 MESICE = 'leden|únor|březen|duben|květen|červen|červenec|srpen|září|říjen|listopad|prosinec'
 def nazev_pisne(nazev):
     n = re.sub(r'\.[A-Za-z0-9]{2,5}$', '', nazev).replace('_', ' ')
@@ -248,11 +248,15 @@ for f in nahravky_st:
     for n in pisne_souboru(f['Name']): pisen(n, 0)['st'].append(f)
 for f in lsjson('Písničky/Texty', cas=True):
     if f['IsDir']: continue
-    z = pisen(nazev_pisne(f['Name']), 2)
-    url = 'https://docs.google.com/document/d/{}/edit'.format(f['ID'])
+    # „Geronimo_text_všechny_verze.md“ → Geronimo
+    z = pisen(re.sub(r'\s+(text|všechny verze)\b.*$', '', nazev_pisne(f['Name']), flags=re.I), 2)
+    # Google dokument / docx se otevře v Dokumentech, txt, md, pdf v náhledu Disku
+    doc = f['Name'].lower().endswith('.docx')
+    url = ('https://docs.google.com/document/d/{}/edit' if doc else DRIVE_F).format(f['ID'])
     if 'Koncept' in f['Path']: z['koncept'] = url
     else:
-        if not z['text'] or f['Name'][:4].isdigit(): z['text'] = url  # datovaná verze je novější
+        # datovaná verze je novější; mezi nedatovanými má přednost dokument před md a txt
+        if not z['text'] or f['Name'][:4].isdigit() or (doc and not z.get('text_doc')): z['text'] = url; z['text_doc'] = doc
         # datum textu: z názvu, jinak poslední úprava dokumentu
         z['text_d'] = max(z['text_d'], DATUM.match(f['Name']).group(1) if DATUM.match(f['Name']) else f['ModTime'][:10])
 for f in lsjson('Písničky/Videoklipy'):
