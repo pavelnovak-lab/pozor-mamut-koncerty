@@ -169,6 +169,7 @@ nezarazene = sorted({'/'.join(f['Path'].split('/')[:2]) for f in fv
                      and not DATUM.match(f['Path'].split('/')[1]) and not re.match(r'\d{4}-\d{2} ', f['Path'].split('/')[1])})
 
 # --- playlisty (pořadí písniček na koncertě): list v tabulce + TXT soubory v Písničky/Playlisty ---
+PISEN_ALIAS = {'jaro': 'Jaro (Sněženky u popelnic)', 'sněženky u popelnic': 'Jaro (Sněženky u popelnic)'}
 sl = collections.Counter(); sl_koncerty = set(); z_tabulky = collections.defaultdict(list)
 listy = [n for n in ('Playlisty', 'Setlisty') if n in wb.sheetnames]
 if listy:
@@ -182,8 +183,39 @@ for d, p in z_tabulky.items():
 for d, m in mat.items():
     if m['pisne']:
         sl_koncerty.add(d)
+        m['pisne'] = [PISEN_ALIAS.get(s.lower(), s) for s in m['pisne']]
         for s in m['pisne']: sl[s] += 1
-pisne = [dict(p=p, n=n) for p, n in sl.most_common()]
+# --- nahrávky písniček: nejnovější ze zkušebny a ze studia (jen pro kapelu, odkazy na Disk) ---
+# Zkušebna: Písničky/Zkušebna/RRRR/RRRR-MM-DD Název písničky[ N].ext
+# Studio:   Písničky/Studio a desky/RRRR[-MM] Název nahrávání/…/[NN-]Název písničky[ - studio RR - mix N].ext
+# Název souboru (bez data a čísla stopy) musí začínat názvem písničky; varianty názvů v NAZVY_PISNI.
+def bez_hacku(t): return re.sub(r'[^a-z0-9]', '', __import__('unicodedata').normalize('NFKD', t).encode('ascii', 'ignore').decode().lower())
+NAZVY_PISNI = {'Jaro (Sněženky u popelnic)': ['Jaro', 'Sněženky u popelnic'], 'Titáni': ['Titáni v Tartaru']}
+AUDIO = re.compile(r'\.(mp3|wav|m4a|aac|flac|ogg|opus)$', re.I)
+def kmen(nazev):  # „2024-02-10_Jihlavská Ganga.aac“ → „jihlavskaganga“
+    n = AUDIO.sub('', nazev); n = re.sub(r'^\d{4}(-\d{2}){0,2}[ _]*', '', n); n = re.sub(r'^\d{1,2}\s*-\s*', '', n)
+    return bez_hacku(n.replace('_', ' '))
+def verze(nazev):
+    c = re.findall(r'(?:mix|verze)?\s*(\d+)\.?\s*(?:mix|verze)?', AUDIO.sub('', re.sub(r'^\d{4}(-\d{2}){0,2}|^\d{1,2}\s*-', '', nazev)))
+    return int(c[-1]) if c else 1
+nahravky_zk = [f for f in lsjson('Písničky/Zkušebna') if not f['IsDir'] and AUDIO.search(f['Name'])
+               and DATUM.match(f['Name'][:7] + '-01') and not re.search(r'K určení|Celá zkouška', f['Path'])]
+nahravky_st = [f for f in lsjson('Písničky/Studio a desky') if not f['IsDir'] and AUDIO.search(f['Name'])
+               and not re.search(r'STOPY|mixdown', f['Path'], re.I)]
+def nahravka(pisen, soubory, klic):
+    jmena = [bez_hacku(x) for x in [pisen, re.sub(r'\s*\(.*\)', '', pisen)] + NAZVY_PISNI.get(pisen, [])]
+    kand = [f for f in soubory if any(kmen(f['Name']).startswith(j) and len(j) >= 4 for j in jmena)]
+    # „Mamut“ nesmí chytit „Mamutí …“: za názvem už nesmí pokračovat písmeno, leda verze
+    kand = [f for f in kand if any(re.fullmatch(re.escape(j) + r'(\d*(studio|mix|verze|vyhravky).*|\d+)?', kmen(f['Name'])) for j in jmena)]
+    if not kand: return None
+    f = max(kand, key=klic); return dict(url=DRIVE_F.format(f['ID']), src=f['Path'])
+zk_klic = lambda f: (f['Name'][:10], verze(f['Name']))
+# novější nahrávání; finální stopy (přímo ve složce nahrávání nebo v WAV/MP3) před pracovními mixy v jiných podsložkách
+st_klic = lambda f: (f['Path'].split('/')[0][:7], len(f['Path'].split('/')) == 2 or f['Path'].split('/')[1] in ('WAV', 'MP3'), verze(f['Name']), f['Name'].lower().endswith('.mp3'))
+def odkazy_pisne(p):
+    z, st = nahravka(p, nahravky_zk, zk_klic), nahravka(p, nahravky_st, st_klic)
+    return dict(zk=z and z['url'], zk_t=z and z['src'].split('/')[-1], st=st and st['url'], st_t=st and st['src'])
+pisne = [dict(p=p, n=n, **odkazy_pisne(p)) for p, n in sl.most_common()]
 
 # --- cesty: jen souhrny ---
 cesty = dict(km=None)
