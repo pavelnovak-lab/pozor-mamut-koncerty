@@ -224,8 +224,8 @@ def nazev_pisne(nazev):
     return n[:1].upper() + n[1:]
 # veřejné odkazy a poznámky k písničkám (ručně)
 PISNE_EXTRA = {
-    'Prior': dict(pozn='původně od naší předchozí kapely AFT', odkazy=[('YouTube (AFT)', 'https://www.youtube.com/watch?v=fSoc_gfuWu8')]),
-    'Eskymačka': dict(pozn='původně od naší předchozí kapely AFT', odkazy=[('YouTube (AFT)', 'https://www.youtube.com/watch?v=Tr0LODnu8Lc')]),
+    'Prior': dict(pozn='Nahráno na desce Aftu', odkazy=[('YouTube (AFT)', 'https://www.youtube.com/watch?v=fSoc_gfuWu8')]),
+    'Eskymačka': dict(pozn='Nahráno na desce Aftu', odkazy=[('YouTube (AFT)', 'https://www.youtube.com/watch?v=Tr0LODnu8Lc')]),
 }
 # jedna nahrávka se dvěma písničkami za sebou → přiřadí se oběma
 VICE_PISNI = {'atvladnezenstvozitrauzlidistejnenebudou': ['Ať vládnou ženy', 'Lachtan']}
