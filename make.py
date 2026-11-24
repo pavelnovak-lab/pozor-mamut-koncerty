@@ -8,7 +8,7 @@ Zdroje:
   - GeoNames CZ.txt (souřadnice obcí), data/cz_obrys.json (obrys ČR, Natural Earth).
 Použití:  python3 make.py [--xlsx soubor.xlsx] [--geonames CZ.txt]
 """
-import argparse, base64, collections, csv, datetime as dt, hashlib, io, json, math, os, re, subprocess, sys
+import argparse, base64, collections, csv, datetime as dt, hashlib, io, json, math, os, re, subprocess, sys, time
 import openpyxl
 
 TU = os.path.dirname(os.path.abspath(__file__))
@@ -102,8 +102,14 @@ po_dnech = [dict(d=DNY[i], n=dny.get(i, 0)) for i in range(7)]
 # --- materiály na Disku: plakáty, playlisty, fotky, videa (párují se podle data RRRR-MM-DD v názvu) ---
 ROOT = 'gdrive,root_folder_id=1Ns75usanWOJoy2fHk7KD8EFYv58sNub_:'
 def lsjson(cesta, cas=False):
-    out = subprocess.run(['rclone', 'lsjson', '-R'] + ([] if cas else ['--no-modtime']) + [ROOT + cesta], check=True, capture_output=True, text=True).stdout
-    return json.loads(out)
+    """Výpis složky z Disku; při chybě (občasný výpadek API/sítě) ještě 2× zkusí znovu, pak skončí s hláškou rclone."""
+    prikaz = ['rclone', 'lsjson', '-R'] + ([] if cas else ['--no-modtime']) + [ROOT + cesta]
+    for pokus in range(3):
+        r = subprocess.run(prikaz, capture_output=True, text=True)
+        if r.returncode == 0: return json.loads(r.stdout)
+        if pokus < 2: time.sleep(60)
+    chyba = (r.stderr.strip().splitlines() or ['?'])[-1]
+    sys.exit(f'rclone lsjson "{cesta}" selhal 3× (exit {r.returncode}): {chyba}')
 DATUM = re.compile(r'(\d{4}-\d{2}-\d{2})')
 OBR = re.compile(r'\.(jpe?g|png|webp|heic|pdf|gif)$', re.I); VID = re.compile(r'\.(mp4|mov|avi|mkv|m4v)$', re.I)
 mat = collections.defaultdict(lambda: dict(plakaty=[], playlist=[], fotky=None, videa=None, pozvanky=[], pisne=[], zdroj={}))
