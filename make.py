@@ -238,10 +238,11 @@ VICE_PISNI = {'atvladnezenstvozitrauzlidistejnenebudou': ['Ať vládnou ženy', 
 def pisne_souboru(nazev): n = nazev_pisne(nazev); return VICE_PISNI.get(bez_hacku(n), [n])
 def klic_pisne(n): return bez_hacku(VARIANTY.get(bez_hacku(n), n))
 katalog = {}
-def pisen(n, priorita):  # vrátí záznam; jméno s diakritikou a z lepšího zdroje (playlist > text > nahrávka) vyhrává
+def pisen(n, priorita):  # vrátí záznam; vyhrává jméno s nejvíc diakritikou, při shodě z lepšího zdroje (playlist > text > nahrávka)
     k = klic_pisne(n); jm = VARIANTY.get(bez_hacku(n), n)
     z = katalog.setdefault(k, dict(p=jm, pr=priorita, n=0, hrano=[], zk=[], st=[], text=None, koncept=None, klip=None, text_d=''))
-    lepsi = (priorita, jm != jm.encode('ascii', 'ignore').decode()) > (z['pr'], z['p'] != z['p'].encode('ascii', 'ignore').decode())
+    diakr = lambda x: sum(not c.isascii() for c in x)  # víc diakritiky = pečlivěji napsané jméno, pak lepší zdroj
+    lepsi = (diakr(jm), priorita) > (diakr(z['p']), z['pr'])
     if lepsi: z['p'], z['pr'] = jm, priorita
     return z
 po_koncertech = {str(r['d']): r for r in kon}
