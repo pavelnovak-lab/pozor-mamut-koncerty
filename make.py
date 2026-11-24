@@ -256,7 +256,7 @@ for f in lsjson('Písničky/Texty', cas=True):
     if f['IsDir']: continue
     # „Geronimo_text_všechny_verze.md“ → Geronimo
     z = pisen(re.sub(r'\s+(text|všechny verze)\b.*$', '', nazev_pisne(f['Name']), flags=re.I), 2)
-    # Google dokument / docx se otevře v Dokumentech, txt, md, pdf v náhledu Disku
+    # Google dokument / docx se otevře v Dokumentech, txt, md, pdf i obrázek (fotka textu) v náhledu Disku
     doc = f['Name'].lower().endswith('.docx')
     url = ('https://docs.google.com/document/d/{}/edit' if doc else DRIVE_F).format(f['ID'])
     if 'Koncept' in f['Path']: z['koncept'] = url
